@@ -1250,7 +1250,7 @@ const QuizGame = () => {
   const [isPointsAnimating, setIsPointsAnimating] = useState(false)
   const [evaluation, setEvaluation] = useState<string>("")
   const [backgroundPatternIndex, setBackgroundPatternIndex] = useState(0) // 背景パターンのインデックス
-  const [, setUserFeedback] = useState("")
+  
 
   const calculateTotalPoints = useCallback(() => {
     const points = userAnswers.reduce((total, answer, index) => {
@@ -1277,22 +1277,6 @@ const QuizGame = () => {
     return ""
   }, [])
 
-  const handleSubmit = useCallback(() => {
-    calculateTotalPoints()
-    const filledAnswers = userAnswers.filter((answer) => answer.trim() !== "").length
-    const currentEvaluation = getEvaluation(filledAnswers)
-    setEvaluation(currentEvaluation)
-    setGameState("evaluation")
-
-    setTimeout(() => {
-      if (currentQuiz < quizzes.length - 1) {
-        handleContinue()
-      } else {
-        setGameState("survey")
-      }
-    }, 3000)
-  }, [calculateTotalPoints, currentQuiz, getEvaluation, userAnswers])
-
   const handleContinue = useCallback(() => {
     if (currentQuiz < quizzes.length - 1) {
       setPreviousAnswers(userAnswers)
@@ -1304,6 +1288,24 @@ const QuizGame = () => {
     }
   }, [currentQuiz, userAnswers])
 
+
+  const handleSubmit = useCallback(() => {
+    calculateTotalPoints()
+    const filledAnswers = userAnswers.filter((answer) => answer.trim() !== "").length
+    const currentEvaluation = getEvaluation(filledAnswers)
+    setEvaluation(currentEvaluation)
+    setGameState("evaluation")
+  
+    setTimeout(() => {
+      if (currentQuiz < quizzes.length - 1) {
+        handleContinue()
+      } else {
+        setGameState("survey")
+      }
+    }, 3000)
+  }, [calculateTotalPoints, currentQuiz, getEvaluation, userAnswers, handleContinue]) // handleContinue を依存配列に追加
+
+ 
   const handleEndQuiz = useCallback(() => {
     calculateTotalPoints()
     setGameState("result")
@@ -1338,7 +1340,7 @@ const QuizGame = () => {
       const feedbackBonus = feedback.trim().length > 0 ? 200 : 0 // 感想入力ボーナス
       const newTotalPoints = totalPoints + surveyPoints + feedbackBonus
 
-      setUserFeedback(feedback)
+      
       setTotalPoints(newTotalPoints)
       setGameState("result")
     },

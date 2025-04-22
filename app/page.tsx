@@ -5,6 +5,7 @@ import { Search } from "@/components/search/search"
 import { QuizCard } from "@/components/quiz-card/quiz-card"
 import { FeaturedQuiz } from "@/components/featured-quiz/featured-quiz"
 import { Header } from "@/components/header/header"
+import Image from "next/image"
 
 // サンプルデータ
 const quizData = [
@@ -71,18 +72,18 @@ export default function Home() {
                   target="_blank"
                   className="block"
                 >
-                  <img 
+                  <Image
                     src="https://www.afi-b.com/upload_image/15505-1727687620-3.png" 
-                    width="728" 
-                    height="90" 
+                    width={728} // 適切なサイズを指定
+                    height={90} // 適切なサイズを指定
                     alt="ハロスキンクリニック" 
                     className="w-full h-auto"
                   />
                 </a>
-                <img 
+                <Image
                   src="https://t.afi-b.com/lead/X15505I/L943732R/A503929m" 
-                  width="1" 
-                  height="1" 
+                  width={1} // 適切なサイズを指定
+                  height={1} // 適切なサイズを指定 
                   alt="" 
                   className="hidden"
                 />

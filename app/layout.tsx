@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from 'next/font/google';
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/react"
 
 // Geistフォントの設定（現在のコード）
 const geistSans = Geist({
@@ -32,6 +33,12 @@ export default function RootLayout({
       >
         {children}
       </body>
+      <body>
+        {children}
+        {/* 2. Analyticsコンポーネントを追加（bodyの閉じタグの直前） */}
+        <Analytics />
+      </body>
     </html>
   );
 }
+

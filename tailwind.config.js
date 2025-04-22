@@ -1,7 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
-  content: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "./**/*.{ts,tsx}", "*.{js,ts,jsx,tsx,mdx}"],
+  content: [
+    "app/**/*.{js,jsx,ts,tsx}",
+    "components/**/*.{js,jsx,ts,tsx}",
+    "lib/**/*.{js,jsx,ts,tsx}",  // libディレクトリがある場合
+    "pages/**/*.{js,jsx,ts,tsx}", // pagesディレクトリがある場合（Pages Router）
+    "*.{js,ts,jsx,tsx,mdx}"      // ルートディレクトリのファイル
+  ],
   theme: {
     extend: {
       colors: {

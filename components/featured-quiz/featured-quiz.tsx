@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link" // Linkコンポーネントをインポート
+import Image from "next/image"
 
 export function FeaturedQuiz() {
   // クイズページへのパスを定義
@@ -31,9 +32,11 @@ export function FeaturedQuiz() {
             href={quizPath}
             className="relative w-full max-w-md aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer"
           >
-            <img
+            <Image
               src="/image/pervasiveness-top-image.png"
               alt="視野を広げてつらさ軽減させるゲーム"
+              width={320} // 適切なサイズを指定
+              height={180} // 適切なサイズを指定
               className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
             />
             <div className="absolute inset-0 flex items-center justify-center">

@@ -2,6 +2,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import Link from "next/link" // Linkコンポーネントをインポート
+import Image from "next/image"
 
 interface QuizCardProps {
   quiz: {
@@ -22,9 +23,11 @@ export function QuizCard({ quiz }: QuizCardProps) {
     <Link href={quizPath} className="block transition-transform duration-200 hover:scale-105">
       <Card className="overflow-hidden transition-all duration-200 hover:shadow-md h-full">
         <div className="relative aspect-video overflow-hidden">
-          <img
-            src={quiz.image || "/placeholder.svg"}
+          <Image
+            src={quiz.image || "/image/pervasiveness-top-image.png"}
             alt={quiz.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw" // レスポンシブ対応
             className="object-cover w-full h-full"
           />
         </div>
