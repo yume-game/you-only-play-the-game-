@@ -3,6 +3,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { Play, Music, Twitter } from "lucide-react"
 
 interface HeaderProps {
   onPopularQuizzes?: () => void
@@ -14,17 +15,17 @@ export function Header({ onPopularQuizzes }: HeaderProps) {
   return (
     <header className="bg-forest-200 border-b border-forest-300">
       <div className="container mx-auto py-4 px-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-forest-700">yumeのクイズ</h1>
+        <h1 className="text-2xl font-bold text-forest-700">yumeのメンタルゲーム</h1>
         
         {/* デスクトップナビゲーション */}
-        <nav className="hidden md:flex space-x-4">
+        <nav className="hidden md:flex items-center space-x-6">
           <Link href="/" className="text-forest-600 hover:text-forest-800 transition-colors">
             ホーム
           </Link>
           {onPopularQuizzes && (
-            <button 
+            <button
               type="button"
-              onClick={onPopularQuizzes} 
+              onClick={onPopularQuizzes}
               className="text-forest-600 hover:text-forest-800 transition-colors"
             >
               人気クイズ
@@ -59,20 +60,54 @@ export function Header({ onPopularQuizzes }: HeaderProps) {
         
         {/* モバイルメニュー（オプション） */}
         {isMenuOpen && (
-          <div className="absolute top-16 left-0 right-0 bg-forest-200 p-4 md:hidden">
-            <nav className="flex flex-col space-y-2">
+          <div className="absolute top-16 left-0 right-0 bg-forest-200 p-4 md:hidden border-b border-forest-300">
+            <nav className="flex flex-col space-y-4">
               <Link href="/" className="text-forest-600 hover:text-forest-800 transition-colors">
                 ホーム
               </Link>
               {onPopularQuizzes && (
-                <button 
+                <button
                   type="button"
-                  onClick={onPopularQuizzes} 
+                  onClick={onPopularQuizzes}
                   className="text-forest-600 hover:text-forest-800 transition-colors text-left"
                 >
                   人気クイズ
                 </button>
               )}
+
+              {/* SNSリンク */}
+              <div className="pt-2 border-t border-forest-300">
+                <h4 className="text-sm font-semibold text-forest-700 mb-3">SNS</h4>
+                <div className="flex flex-col space-y-3">
+                  <a
+                    href="https://www.tiktok.com/@yumegeimu?is_from_webapp=1&sender_device=pc"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 text-forest-600 hover:text-forest-800 transition-colors"
+                  >
+                    <Music size={18} />
+                    <span>TikTok</span>
+                  </a>
+                  <a
+                    href="https://www.youtube.com/channel/UC03UIqgV__nUC4s6VNOQFDw"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 text-forest-600 hover:text-forest-800 transition-colors"
+                  >
+                    <Play size={18} />
+                    <span>YouTube</span>
+                  </a>
+                  <a
+                    href="https://x.com/@KY15161637"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 text-forest-600 hover:text-forest-800 transition-colors"
+                  >
+                    <Twitter size={18} />
+                    <span>X (Twitter)</span>
+                  </a>
+                </div>
+              </div>
             </nav>
           </div>
         )}

@@ -10,7 +10,21 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Slider } from "@/components/ui/slider"
 import Image from "next/image"
 import { motion, useAnimation, AnimatePresence } from "framer-motion"
-import { Leaf, Wind, Target, Clock, Plus, ArrowRight, Star, Award } from "lucide-react"
+import { Leaf, Wind, Target, Clock, Plus, ArrowRight, Star, Award, Diamond } from "lucide-react"
+import { createClient } from "@supabase/supabase-js"
+import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
+
+// Supabaseクライアントの設定（Pervasiveness用プロジェクト）
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_PERVASIVENESS
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PERVASIVENESS
+
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
+
+const isSupabaseConfigured =
+  typeof process.env.NEXT_PUBLIC_SUPABASE_URL_PERVASIVENESS === "string" &&
+  process.env.NEXT_PUBLIC_SUPABASE_URL_PERVASIVENESS.length > 0 &&
+  typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PERVASIVENESS === "string" &&
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PERVASIVENESS.length > 0
 
 type Quiz = {
   question: string
@@ -22,7 +36,8 @@ type Quiz = {
 
 const quizzes: Quiz[] = [
   {
-    question: "あなたの身の回りにあるものをなんでもいいので書いてください。イスやペン本当になんでもいいです。（より楽にするため）",
+    question:
+      "あなたの身の回りにあるものをなんでもいいので書いてください。イスやペン本当になんでもいいです。（より楽にするため）",
     画像: {
       メイン: [
         "/image/background-firstroom.png",
@@ -43,7 +58,6 @@ const quizzes: Quiz[] = [
         "/image/baclground-bright-forest-road.png",
         "/image/background-cat-reaf.png",
         "/image/background-reaf-road.png",
-       
       ],
       オーバーレイ: "/image/very-black-opponent.png",
     },
@@ -64,20 +78,6 @@ const quizzes: Quiz[] = [
   {
     question:
       "それらの考えうる最悪の状況を考えてください。そのストーリーを書いてみましょう。（つらいでしょうが、視野を広げるため一回書いて、次のクイズまでみてください）",
-      画像: {
-        メイン: [
-          "/image/background-firstroom.png",
-          "/image/background-blue-sky.png",
-          "/image/baclground-bright-forest-road.png",
-          "/image/background-cat-reaf.png",
-          "/image/background-reaf-road.png",
-          
-        ],
-        オーバーレイ: "/image/usual-opponent.png",
-      },
-  },
-  {
-    question: "それらに対して感謝を伝えるとしたらなんといいますか？生きててくれてありがとうなど（さらに視野が広がるため）",
     画像: {
       メイン: [
         "/image/background-firstroom.png",
@@ -89,9 +89,23 @@ const quizzes: Quiz[] = [
       オーバーレイ: "/image/usual-opponent.png",
     },
   },
- 
   {
-    question: "あなたの国では当たり前なことはどんなものがありますか？治安がいいなどなんでもいいです。貧しい国との比較など（よりあなたが楽になるため）",
+    question:
+      "それらに対して感謝を伝えるとしたらなんといいますか？生きててくれてありがとうなど（さらに視野が広がるため）",
+    画像: {
+      メイン: [
+        "/image/background-firstroom.png",
+        "/image/background-blue-sky.png",
+        "/image/baclground-bright-forest-road.png",
+        "/image/background-cat-reaf.png",
+        "/image/background-reaf-road.png",
+      ],
+      オーバーレイ: "/image/usual-opponent.png",
+    },
+  },
+  {
+    question:
+      "あなたの国では当たり前なことはどんなものがありますか？治安がいいなどなんでもいいです。貧しい国との比較など（よりあなたが楽になるため）",
     画像: {
       メイン: [
         "/image/background-firstroom.png",
@@ -112,13 +126,13 @@ const quizzes: Quiz[] = [
         "/image/baclground-bright-forest-road.png",
         "/image/background-cat-reaf.png",
         "/image/background-reaf-road.png",
-        
       ],
       オーバーレイ: "/image/white-opponent.png",
     },
   },
   {
-    question: "あなたを構成している体の部分、あなたの自分を支えてきたことはなんですか？胃や口や足などなんでもいいです。（あなたがめっちゃ楽になるため）",
+    question:
+      "あなたを構成している体の部分、あなたの自分を支えてきたことはなんですか？胃や口や足などなんでもいいです。（あなたがめっちゃ楽になるため）",
     画像: {
       メイン: [
         "/image/background-firstroom.png",
@@ -134,11 +148,11 @@ const quizzes: Quiz[] = [
     question: "それらに対して感謝を伝えるとしたらなんといいますか？（あなたがめっちゃ楽になるため）",
     画像: {
       メイン: [
-          "/image/background-firstroom.png",
-          "/image/background-blue-sky.png",
-          "/image/baclground-bright-forest-road.png",
-          "/image/background-cat-reaf.png",
-          "/image/background-reaf-road.png",
+        "/image/background-firstroom.png",
+        "/image/background-blue-sky.png",
+        "/image/baclground-bright-forest-road.png",
+        "/image/background-cat-reaf.png",
+        "/image/background-reaf-road.png",
       ],
       オーバーレイ: "/image/very-white-opponent.png",
     },
@@ -169,29 +183,126 @@ const getTimeLimit = (answerIndex: number): number => {
 // アフィリエイト用のテキストパターン
 const affiliateTextPatterns = [
   {
-    headline: "今日診断書をもらって提出したら、最短で明日会社や学校休めるオンラインクリニックのご紹介",
+    headline: "<span class='text-red-600 text-5xl'>モテる</span>要因一位の親切な自分に変われる、メンタルヘルスをよくするのが一番の自分<span class='text-red-600 text-5xl'>磨き</span>。",
     description:
-      " 長い目で見たら休むことはあなたのクオリティを上げて、より会社のためになります。つまり今この瞬間あなたが予約することが最善なのです。預り金としてお金を一度払うようですが、保険が使えるクリニックで安いということ、ラインで１分後には予約できている状態にでき今日の予約もオーケーです。つまり最短で今日予約して、家でカウンセリングを受けて、今日診断書もらって、明日休めるということです。当日の診断書発行をアピールしていてかつこのクオリティのクリニックは自分調べですが、ここだけです。一歩踏み出してみましょう。アフィリエイト広告となっておりますので、よろしかったら、こちらのリンクからご予約していただけると嬉しいです。",
+      "洋服や化粧水などで大きくかわれましたか？変われたならこの文章は読まなくて大丈夫。大きな要因をつぶしていないと、いくら表面をきれいにしても結果は出ないでしょう。洋服一着くらいの値段を同じようにかけて、大きな成果を出すのはメンタルヘルスを直すことです。メンタルヘルスはいらいらしていない自分になり、やさしくなるので、<span class='text-red-600 text-3xl'>モテる</span>要因一位の親切さをより進化させます。やさしくする<span class='text-red-600 text-3xl'>だけのところではありません</span>、心理学のマスター（公認心理士（国家資格））しか在籍していないクリニックがあります。学問的な知識であなたにアドバイスをします。今日のあなたが一番若く治ったら、明日からのあなたはもっと<span class='text-red-600 text-3xl'>楽にする</span>時間になるのだから、今日行動したら一番いいですよね？あなたの人生がいいものになるなら何でもお金をかける価値があります。オンラインなので家のソファーで受けられますよ。",
   },
   {
-    headline: "警告。精神科は他人事じゃない。まずはオンライン診断",
+    headline: "あなたの人生を<span class='text-red-600 text-5xl'>楽にする</span>SNS、ゲーム以外の方法",
     description:
-      "10年後のあなたはどうなっているでしょうか？手っ取り早く家のソファーとかで一回話を聞いてもらいませんか？預り金としてお金を一度払うようですが、保険が使えるクリニックで安いということ、ラインで１分後には予約できている状態にでき今日の予約もオーケーです。つまり最短で今日予約して、家でカウンセリングを受けて、今日診断書もらって、明日休めるということです。当日の診断書発行をアピールしていてこのクオリティのクリニックは自分調べですが、ここだけです。一歩踏み出してみましょう。アフィリエイト広告となっておりますので、よろしかったら、こちらのリンクからご予約していただけると嬉しいです。",
+      "SNSやゲームはかえって疲れることが科学的にわかっています（ドーパミン疲れ、情報過多）。また理系は、テクノロジーに執着する傾向が進化論的にあります。この事実から逃げたらまた同じ人生を明日以降も送ることでしょう。ゲーム一個買うのをやめる、一時間ティックトックを見るのをやめる。これらで作ったリソースで　イライラしてない自分を買うのです。やさしい<span class='text-red-600 text-3xl'>だけのところではありません</span>カウンセリングではなく、心理学の国家資格公認心理士が100％のこのクリニックを予約してください。さらにオンラインなので家のソファーで受けられますよ。",
   },
   {
-    headline: "もっと生き生きとしたいあなた。診断書提出して最短で明日休みませんか？",
+    headline: "あなたが心理学を利用したこのゲームで一瞬で変われたように 、学問的カウンセリングで一瞬でキラキラした人になれます。",
     description:
-      "自信があるあの人も過去のつらい経験をどうにか乗り越えて今、自信満々だとしたら？あなたが乗り越える方法をご紹介。預り金としてお金を一度払うようですが、保険が使えるクリニックで安いということ、ラインで１分後には予約できている状態にでき今日の予約もオーケーです。つまり最短で今日予約して、家でカウンセリングを受けて、今日診断書もらって、明日休めるということです。当日の診断書をアピールしていてこのクオリティのクリニックは自分調べですが、ここだけです。一歩踏み出してみましょう。アフィリエイト広告となっておりますので、よろしかったら、こちらのリンクからご予約していただけると嬉しいです。",
+      "カウンセリングは優しくしてくれる<span class='text-red-600 text-3xl'>だけのところではありません</span>。心理学という学問を学ぶ学校でもあります。心理学のマスターしか在籍していない、クリニックがあります。他のクリニックはやさしさに特化した人もいるところが多いです。今日のあなたが一番若く治ったら、明日からのあなたはもっと<span class='text-red-600 text-3xl'>楽にする</span>時間になるのだから、今日行動したら一番いいですよね？あなたの人生がいいものになるなら何でもお金をかける価値があります。オンラインなので家のソファーで受けられますよ。",
   },
   {
-    headline: "手っ取り早くお金払って、メンタル直しちゃいましょう",
+    headline: "女の子から話しかけられる<span class='text-red-600 text-5xl'>男磨き</span>。",
     description:
-      "自信があるあの人も過去のつらい経験をどうにか乗り越えて今、自信満々だとしたら？あなたが乗り越える方法をご紹介。預り金としてお金を一度払うようですが、保険が使えるクリニックで安いということ、ラインで１分後には予約できている状態にでき今日の予約もオーケーです。つまり最短で今日予約して、家でカウンセリングを受けて、今日診断書もらって、明日休めるということです。当日の診断書をアピールしていてこのクオリティのクリニックは自分調べですが、ここだけです。一歩踏み出してみましょう。アフィリエイト広告となっておりますので、よろしかったら、こちらのリンクからご予約していただけると嬉しいです。",
+      "あなたは怒りっぽい人に話しかけたくなりますか？話しかけたくなる人は総じてめちゃくちゃメンタルの状態がいいです。さらにあなたを高めるため、やさしさではなく直す理論を得ましょう。あなたがこのゲームで簡単に変われたのは心理学のたまものです。全員が心理学の国家資格を持ったクリニック以外には行かないでください。かといって足を運ぶのはめんどくさいので簡単にお家のソファーなどで受けられるクリニックを張っておきます。",
   },
 ]
-    
+
+// アフィリエイト画像コンポーネント（afi.htmlの内容をそのまま使用）
+const AffiliateComponent = ({ className = "", affiliateTextPattern }: { className?: string; affiliateTextPattern?: any }) => {
+   
+  // afi.htmlの内容をそのまま定数として定義
+  const affiliateHtml = `<a href="https://px.a8.net/svt/ejp?a8mat=45167E+679KMQ+5OI8+5ZEMP" rel="nofollow">
+<img border="0" width="300" height="250" alt="" src="https://www27.a8.net/svt/bgt?aid=250317482375&wid=001&eno=01&mid=s00000026504001005000&mc=1"></a>
+<img border="0" width="1" height="1" src="https://www10.a8.net/0.gif?a8mat=45167E+679KMQ+5OI8+5ZEMP" alt="">`
+
+  return (
+    <div className={`w-full mx-auto mt-2 mb-2 ${className}`}>
+      {/* アフィリエイト広告ヘッドライン */}
+      {affiliateTextPattern && (
+        <h2 className="text-4xl font-bold text-orange-600 mt-8 mb-4 text-center" dangerouslySetInnerHTML={{ __html: affiliateTextPattern.headline }}></h2>
+      )}
+      
+      <div 
+        style={{
+          fontFamily: "'Hiragino Sans', 'Yu Gothic', sans-serif",
+          margin: 0,
+          padding: "10px",
+          backgroundColor: "#bbf7d0",
+          color: "#333",
+          maxWidth: "600px",
+          marginLeft: "auto",
+          marginRight: "auto"
+        }}
+      >
+        {/* アフィリエイトHTMLをそのまま挿入 */}
+        <div 
+          style={{ 
+            display: "flex", 
+            justifyContent: "center", 
+            alignItems: "center",
+            marginBottom: "20px" 
+          }}
+          dangerouslySetInnerHTML={{ __html: affiliateHtml }}
+        />
+        
+        {/* 説明文 */}
+        {affiliateTextPattern && (
+          <div 
+            style={{
+              fontSize: "18px",
+              fontWeight: "bold",
+              lineHeight: "1.6",
+              marginBottom: "25px",
+              textAlign: "justify",
+              color: "#166534",
+              backgroundColor: "transparent",
+              padding: "15px",
+              borderRadius: "8px"
+            }}
+            dangerouslySetInnerHTML={{ __html: affiliateTextPattern.description }}
+          />
+        )}
+        
+        {/* ボタンコンテナ */}
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              display: "inline-block",
+              padding: "15px 30px",
+              backgroundColor: "#ff6b6b",
+              borderRadius: "50px",
+              fontSize: "1.1rem",
+              fontWeight: "bold",
+              minWidth: "200px",
+              boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
+              transition: "all 0.3s ease",
+              cursor: "pointer"
+              
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#ff5252"
+              e.currentTarget.style.transform = "translateY(-2px)"
+              e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.3)"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#ff6b6b"
+              e.currentTarget.style.transform = "translateY(0px)"
+              e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.2)"
+            }}
+            dangerouslySetInnerHTML={{ 
+              __html: `<a href="https://px.a8.net/svt/ejp?a8mat=45167E+679KMQ+5OI8+BW8O2&a8ejpredirect=https%3A%2F%2Fkimochi-mental.com%2Fclient%2Fhome" rel="nofollow">今すぐ予約</a>
+<img border="0" width="1" height="1" src="https://www19.a8.net/0.gif?a8mat=45167E+679KMQ+5OI8+BW8O2" alt="">` 
+            }}
+
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 
 const IntroPage = ({ onStart }: { onStart: () => void }) => {
+  const [isTermsOpen, setIsTermsOpen] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -201,20 +312,56 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
       className="relative w-full h-screen flex flex-col items-center justify-center"
     >
       <div className="absolute inset-0 z-0">
-        <Image src="/image/background-bright-forest-road.png?height=1080&width=1920" alt="心の状態" fill className="object-cover" priority />
+        <Image
+          src="/image/background-bright-forest-road.png?height=1080&width=1920"
+          alt="心の状態"
+          fill
+          className="object-cover"
+          priority
+        />
       </div>
+
       <div className="relative z-10 text-center space-y-6 bg-green-700 bg-opacity-70 p-8 rounded-lg max-w-2xl">
-        <h1 className="text-4xl font-bold text-white">さあ、ここでつらい思いを軽減させましょう</h1>
+        <h1 className="text-4xl font-bold text-white">さあ、ここでつらい思いを軽減させましょう！</h1>
         <p className="text-lg text-white">
-          気づいてない部分に気付くことで、メンタルの改善を図ります。質問に答えてポイントゲット！
+          このゲームではいくつかの質問に答えてもらうことで、あなたのメンタルの改善を図ります。　　　多くの質問に答えれるほど、メンタルヘルスの改善が見込めます。
+          　　　　　　　　一問20秒です。ではいってらっしゃい！（※完全無料です。）
         </p>
-        <Button
-          onClick={onStart}
-          className="bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white"
-        >
-          スタート
-        </Button>
+
+        {/* 利用規約セクション */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-center space-x-3">
+            <button
+              onClick={() => setIsTermsOpen(true)}
+              className="text-white underline hover:text-green-200 transition-colors"
+            >
+              利用規約
+            </button>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="w-5 h-5 rounded border-2 border-white cursor-pointer"
+              />
+              <span className="text-white">同意する</span>
+            </label>
+          </div>
+
+          <Button
+            onClick={onStart}
+            disabled={!agreedToTerms}
+            className={`bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white ${
+              !agreedToTerms ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            スタート
+          </Button>
+        </div>
       </div>
+
+      {/* 利用規約ポップアップ */}
+      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </motion.div>
   )
 }
@@ -426,14 +573,14 @@ const QuizPage = ({
               <motion.div
                 key={i}
                 initial={{
-                  x: (Math.random() - 0.5) * window.innerWidth * 0.8,
+                  x: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerWidth * 0.8 : 800),
                   y: 0,
                   scale: 0,
                   opacity: 1,
                 }}
                 animate={{
-                  x: (Math.random() - 0.5) * window.innerWidth * 0.8,
-                  y: -window.innerHeight * (0.5 + Math.random() * 0.5),
+                  x: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerWidth * 0.8 : 800),
+                  y: -(typeof window !== "undefined" ? window.innerHeight * (0.5 + Math.random() * 0.5) : 400),
                   scale: 2 + Math.random() * 2,
                   opacity: 0,
                 }}
@@ -464,13 +611,17 @@ const QuizPage = ({
               <motion.div
                 key={i}
                 initial={{
-                  x: window.innerWidth / 2 + (Math.random() - 0.5) * window.innerWidth,
-                  y: window.innerHeight,
+                  x:
+                    (typeof window !== "undefined" ? window.innerWidth / 2 : 400) +
+                    (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerWidth : 800),
+                  y: typeof window !== "undefined" ? window.innerHeight : 600,
                   opacity: 1,
                   rotate: 0,
                 }}
                 animate={{
-                  x: window.innerWidth / 2 + (Math.random() - 0.5) * window.innerWidth * 1.5,
+                  x:
+                    (typeof window !== "undefined" ? window.innerWidth / 2 : 400) +
+                    (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerWidth * 1.5 : 1200),
                   y: -100,
                   opacity: 0,
                   rotate: Math.random() * 360,
@@ -556,8 +707,8 @@ const QuizPage = ({
                   opacity: 0,
                 }}
                 animate={{
-                  x: (Math.random() - 0.5) * window.innerWidth * 0.8,
-                  y: (Math.random() - 0.5) * window.innerHeight * 0.8,
+                  x: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerWidth * 0.8 : 800),
+                  y: (Math.random() - 0.5) * (typeof window !== "undefined" ? window.innerHeight * 0.8 : 600),
                   scale: 1,
                   opacity: [0, 1, 0],
                 }}
@@ -661,13 +812,45 @@ const QuizPage = ({
               </p>
               <Progress value={((currentQuiz + 1) / quizzes.length) * 100} className="h-2 bg-green-200" />
             </div>
-            <motion.p
-              className="text-xl font-bold text-center text-green-800"
+            <motion.div
+              className="flex items-center justify-center gap-3 text-xl font-bold text-green-800"
               animate={isPointsAnimating ? { scale: [1, 1.1, 1] } : {}}
               transition={{ duration: 0.5 }}
             >
-              合計ポイント: {totalPoints}
-            </motion.p>
+              {/* 光るダイヤ */}
+              <div className="relative">
+                <motion.div
+                  className="w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg"
+                  animate={{
+                    boxShadow: [
+                      "0 4px 6px -1px rgba(59, 130, 246, 0.5)",
+                      "0 10px 15px -3px rgba(147, 51, 234, 0.8)",
+                      "0 4px 6px -1px rgba(59, 130, 246, 0.5)",
+                    ],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Diamond className="w-4 h-4 text-white fill-current" />
+                </motion.div>
+                <motion.div
+                  className="absolute inset-0 bg-blue-400 rounded-full opacity-30"
+                  animate={{
+                    scale: [1, 1.3, 1],
+                    opacity: [0.3, 0.1, 0.3],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  }}
+                />
+              </div>
+              {totalPoints}
+            </motion.div>
           </CardHeader>
           <CardContent className="space-y-8 relative">
             <motion.div
@@ -687,7 +870,7 @@ const QuizPage = ({
               <div className="absolute top-2 right-2 bg-green-500 bg-opacity-70 text-white px-3 py-1 rounded-full z-20">
                 <span>{getBackgroundLabel()}</span>
               </div>
-              <div className="relative w-full h-64 rounded-lg overflow-hidden">
+              <div className="relative w-full h-64 md:h-80 lg:h-96 rounded-lg overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={backgroundPatternIndex}
@@ -698,10 +881,15 @@ const QuizPage = ({
                     className="absolute inset-0"
                   >
                     <Image
-                      src={quizzes[currentQuiz].画像.メイン[backgroundPatternIndex] || "/image/background-firstroom.png"}
+                      src={
+                        quizzes[currentQuiz].画像.メイン[backgroundPatternIndex] ||
+                        "/placeholder.svg?height=400&width=600&query=部屋の背景" ||
+                        "/placeholder.svg" ||
+                        "/placeholder.svg"
+                      }
                       alt={`背景パターン${backgroundPatternIndex + 1}`}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                       priority={currentQuiz === 0 && backgroundPatternIndex === 0}
                     />
                   </motion.div>
@@ -712,10 +900,15 @@ const QuizPage = ({
                   animate={overlayControls}
                 >
                   <Image
-                    src={quizzes[currentQuiz].画像.オーバーレイ || "/image/very-white-opponent.png"}
+                    src={
+                      quizzes[currentQuiz].画像.オーバーレイ ||
+                      "/placeholder.svg?height=400&width=200&query=明るい白い人影" ||
+                      "/placeholder.svg" ||
+                      "/placeholder.svg"
+                    }
                     alt="オーバーレイ画像"
                     fill
-                    className="object-cover"
+                    className="object-contain object-left"
                     priority={currentQuiz === 0}
                   />
                 </motion.div>
@@ -952,16 +1145,135 @@ const QuizPage = ({
 
 const ResultPage = ({
   totalPoints,
+  allUserAnswers,
   onRestart,
   onExit,
-}: { totalPoints: number; onRestart: () => void; onExit: () => void }) => {
+}: {
+  totalPoints: number
+  allUserAnswers: string[][]
+  onRestart: () => void
+  onExit: () => void
+}) => {
   const [affiliateTextPattern, setAffiliateTextPattern] = useState(affiliateTextPatterns[0])
+  const [affiliatePatternIndex, setAffiliatePatternIndex] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false) // 追加: 送信中フラグ
+  const [hasSubmitted, setHasSubmitted] = useState(false) // 追加: 送信済みフラグ
 
   // コンポーネントがマウントされた時にランダムなテキストパターンを選択
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * affiliateTextPatterns.length)
     setAffiliateTextPattern(affiliateTextPatterns[randomIndex])
+    setAffiliatePatternIndex(randomIndex)
   }, [])
+
+  // アフィリエイトリンクがクリックされた時の処理
+  const handleAffiliateClick = useCallback(
+    (clickData?: { url?: string; clickType?: string }) => {
+      if (isSubmitting || hasSubmitted) {
+        // すでに処理中または完了済みの場合でも、遷移は実行
+        if (clickData?.url) {
+          setTimeout(() => {
+            window.open(clickData.url, "_blank")
+          }, 100)
+        }
+        return
+      }
+
+      setIsSubmitting(true)
+      const shouldRedirect = true
+      const redirectUrl = clickData?.url
+
+      if (!supabase || !isSupabaseConfigured) {
+        console.log("Supabase環境変数が設定されていないため、アフィリエイトデータ保存をスキップします")
+        setHasSubmitted(true)
+        setIsSubmitting(false)
+        
+        if (shouldRedirect && redirectUrl) {
+          setTimeout(() => {
+            window.open(redirectUrl, "_blank")
+          }, 200)
+        }
+      } else {
+        // 既存のレコードを更新（アフィリエイト情報のみ追加）
+        const responseId = localStorage.getItem('quiz_response_id')
+        
+        if (responseId) {
+          // 既存レコードを更新
+          supabase.from("pervasiveness_responses").update({
+            affiliate_pattern_index: affiliatePatternIndex,
+            affiliate_clicked: true,
+            affiliate_click_type: clickData?.clickType || "unknown",
+          }).eq('id', responseId).then(({ error }) => {
+            if (error) {
+              console.error("アフィリエイトデータの更新に失敗しました:", error)
+            } else {
+              console.log("アフィリエイトデータが正常に更新されました")
+            }
+            
+            setHasSubmitted(true)
+            setIsSubmitting(false)
+
+            // データ送信完了後（成功・失敗問わず）にアフィリエイトリンクに遷移
+            if (shouldRedirect && redirectUrl) {
+              setTimeout(() => {
+                window.open(redirectUrl, "_blank")
+              }, 200)
+            }
+          })
+        } else {
+          console.warn("quiz_response_idが見つかりません。アフィリエイト情報のみで新規レコードを作成します")
+          // レスポンスIDがない場合は新規作成
+          supabase.from("pervasiveness_responses").insert({
+            total_points: totalPoints || 0,
+            all_user_answers: allUserAnswers || [],
+            enjoyment_rating: 5, // デフォルト値
+            improvement_rating: 5, // デフォルト値
+            affiliate_pattern_index: affiliatePatternIndex,
+            affiliate_clicked: true,
+            affiliate_click_type: clickData?.clickType || "unknown",
+          }).then(({ error }) => {
+            if (error) {
+              console.error("アフィリエイトデータの保存に失敗しました:", error)
+            } else {
+              console.log("アフィリエイトデータが正常に保存されました")
+            }
+            
+            setHasSubmitted(true)
+            setIsSubmitting(false)
+
+            if (shouldRedirect && redirectUrl) {
+              setTimeout(() => {
+                window.open(redirectUrl, "_blank")
+              }, 200)
+            }
+          })
+        }
+      }
+    },
+    [isSubmitting, hasSubmitted, totalPoints, affiliatePatternIndex, allUserAnswers],
+  )
+
+  
+  // iframeからのメッセージを受信するリスナー
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // オリジンチェック（セキュリティ向上）
+      if (event.origin !== window.location.origin) {
+        return
+      }
+
+      if (event.data && event.data.type === "affiliate-click") {
+        // クリックデータを含めてhandleAffiliateClickを呼び出し
+        handleAffiliateClick({
+          url: event.data.url,
+          clickType: event.data.clickType || "iframe",
+        })
+      }
+    }
+
+    window.addEventListener("message", handleMessage)
+    return () => window.removeEventListener("message", handleMessage)
+  }, [handleAffiliateClick])
 
   return (
     <motion.div
@@ -974,144 +1286,20 @@ const ResultPage = ({
       <Leaf className="w-24 h-24 mx-auto text-green-600" />
       <h1 className="text-4xl font-bold text-green-800">Finish！</h1>
       <p className="text-2xl font-semibold text-green-700">合計ポイント: {totalPoints}</p>
-      <p className="text-lg text-green-600 max-w-2xl mx-auto">
+      <p className="text-lg max-w-2xl mx-auto" style={{ color: "rgb(0, 112, 35)" }}>
         おめでとうございます！あなたの創造力と思考力が森の中で育まれました。
         このスコアは、あなたのユニークな視点と深い思考を反映しています。
       </p>
 
-      {/* アフィリエイトセクション - ワクワク感あふれるデザイン */}
-      <div className="my-12 relative">
-        {/* キラキラエフェクト */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 bg-yellow-300 rounded-full"
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                opacity: [0.2, 1, 0.2],
-                scale: [0.8, 1.2, 0.8],
-              }}
-              transition={{
-                duration: 2 + Math.random() * 2,
-                repeat: Number.POSITIVE_INFINITY,
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
-        </div>
 
-        {/* ランダムに選ばれた見出し */}
-        <motion.h2
-          className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-500 mb-4 pb-2"
-          animate={{
-            scale: [1, 1.05, 1],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Number.POSITIVE_INFINITY,
-            repeatType: "reverse",
-          }}
-        >
-          {affiliateTextPattern.headline}
-        </motion.h2>
+        {/* アフィリエイトコンポーネント */}
+        <AffiliateComponent affiliateTextPattern={affiliateTextPattern} />
 
-        {/* ランダムに選ばれたサブテキスト */}
-        <p className="text-lg text-green-700 mb-4 max-w-2xl mx-auto">{affiliateTextPattern.description}</p>
-
-        {/* 下向き矢印アニメーション - コピーライトの直下に配置 */}
-        <motion.div
-          className="mx-auto mb-6"
-          animate={{
-            y: [0, 10, 0],
-          }}
-          transition={{
-            duration: 1,
-            repeat: Number.POSITIVE_INFINITY,
-            repeatType: "reverse",
-          }}
-        >
-          <div className="text-green-500 text-5xl">↓</div>
-        </motion.div>
-
-        {/* アフィリエイトリンクと画像 - アニメーション付き */}
-        <motion.div
-          className="relative mx-auto w-[336px] h-[280px] rounded-xl overflow-hidden shadow-2xl"
-          whileHover={{
-            scale: 1.05,
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-green-400/30 to-blue-500/30"
-            animate={{
-              opacity: [0.5, 0.8, 0.5],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
-            }}
-          />
-
-          <a
-            href="https://t.afi-b.com/visit.php?a=X15505I-f503925l&p=L943732R"
-            target="_blank"
-            rel="nofollow noopener noreferrer"
-            className="block relative w-full h-full"
-          >
-            <motion.div
-              className="w-full h-full"
-              animate={{
-                scale: [1, 1.05, 1],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Number.POSITIVE_INFINITY,
-                repeatType: "reverse",
-              }}
-            >
-              <Image
-                src="https://www.afi-b.com/upload_image/15505-1733176519-3.jpg"
-                alt="ハロスキンクリニック"
-                fill
-                className="object-contain"
-                unoptimized
-              />
-            </motion.div>
-
-            {/* クリックを促す要素 */}
-            <motion.div
-              className="absolute bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full font-bold text-sm"
-              animate={{
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Number.POSITIVE_INFINITY,
-                repeatType: "reverse",
-              }}
-            >
-              今すぐチェック！
-            </motion.div>
-          </a>
-        </motion.div>
-
-        {/* トラッキング用の画像 - 常に表示（非表示） */}
-        <Image
-          src="https://t.afi-b.com/lead/X15505I/L943732R/f503925l"
-          alt=""
-          width={1}
-          height={1}
-          className="hidden"
-          unoptimized
-        />
-      </div>
-
+{hasSubmitted && (
+  <div className="mt-4 text-center text-sm text-green-600 font-medium">
+    ✨ ありがとうございます！
+  </div>
+)}
       <div className="flex justify-center space-x-4">
         <Button
           onClick={onRestart}
@@ -1122,7 +1310,7 @@ const ResultPage = ({
         <Button
           onClick={onExit}
           variant="outline"
-          className="px-8 py-3 text-lg border-green-500 text-green-700 hover:bg-green-100"
+          className="px-8 py-3 text-lg border-green-500 text-green-700 hover:bg-green-100 bg-transparent"
         >
           終わる
         </Button>
@@ -1216,7 +1404,7 @@ const SurveyPage = ({
           <p className="text-center text-green-600">{mentalImprovement}</p>
         </div>
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-green-700">感想や気づいたことを自由に書いてください</h3>
+          <h3 className="text-lg font-semibold text-green-700">感想や気づいたことを自由に書いてください ＋1000pt</h3>
           <Textarea
             placeholder="ここに感想を入力してください..."
             value={feedback}
@@ -1246,11 +1434,11 @@ const QuizGame = () => {
   const [currentQuiz, setCurrentQuiz] = useState(0)
   const [userAnswers, setUserAnswers] = useState<string[]>([""])
   const [previousAnswers, setPreviousAnswers] = useState<string[]>([])
+  const [allUserAnswers, setAllUserAnswers] = useState<string[][]>([]) // 全ての回答を保存
   const [totalPoints, setTotalPoints] = useState(0)
   const [isPointsAnimating, setIsPointsAnimating] = useState(false)
   const [evaluation, setEvaluation] = useState<string>("")
   const [backgroundPatternIndex, setBackgroundPatternIndex] = useState(0) // 背景パターンのインデックス
-  
 
   const calculateTotalPoints = useCallback(() => {
     const points = userAnswers.reduce((total, answer, index) => {
@@ -1279,15 +1467,18 @@ const QuizGame = () => {
 
   const handleContinue = useCallback(() => {
     if (currentQuiz < quizzes.length - 1) {
+      // 現在の回答を全回答履歴に追加
+      setAllUserAnswers((prev) => [...prev, userAnswers.filter((answer) => answer.trim() !== "")])
       setPreviousAnswers(userAnswers)
       setCurrentQuiz(currentQuiz + 1)
       setUserAnswers([""])
       setGameState("quiz")
     } else {
+      // 最後の回答も追加
+      setAllUserAnswers((prev) => [...prev, userAnswers.filter((answer) => answer.trim() !== "")])
       setGameState("result")
     }
   }, [currentQuiz, userAnswers])
-
 
   const handleSubmit = useCallback(() => {
     calculateTotalPoints()
@@ -1295,7 +1486,7 @@ const QuizGame = () => {
     const currentEvaluation = getEvaluation(filledAnswers)
     setEvaluation(currentEvaluation)
     setGameState("evaluation")
-  
+
     setTimeout(() => {
       if (currentQuiz < quizzes.length - 1) {
         handleContinue()
@@ -1303,13 +1494,18 @@ const QuizGame = () => {
         setGameState("survey")
       }
     }, 3000)
-  }, [calculateTotalPoints, currentQuiz, getEvaluation, userAnswers, handleContinue]) // handleContinue を依存配列に追加
+  }, [calculateTotalPoints, currentQuiz, getEvaluation, userAnswers, handleContinue])
 
- 
-  const handleEndQuiz = useCallback(() => {
+  // handleEndQuiz関数を以下のように修正します
+  const handleEndQuiz = useCallback(async () => {
     calculateTotalPoints()
+
+    // 現在までの回答を全回答履歴に追加
+    setAllUserAnswers((prev) => [...prev, userAnswers.filter((answer) => answer.trim() !== "")])
+
+    // 直接結果ページに遷移
     setGameState("result")
-  }, [calculateTotalPoints])
+  }, [calculateTotalPoints, allUserAnswers, userAnswers, totalPoints])
 
   const addAnswerField = useCallback(() => {
     if (userAnswers.length < MAX_ANSWERS && userAnswers[userAnswers.length - 1].trim() !== "") {
@@ -1330,38 +1526,68 @@ const QuizGame = () => {
     setTotalPoints(0)
     setUserAnswers([""])
     setPreviousAnswers([])
+    setAllUserAnswers([])
     setBackgroundPatternIndex(0) // 背景パターンをリセット
     setGameState("quiz")
   }, [])
 
   const handleSurveySubmit = useCallback(
-    (enjoyment: number, mentalImprovement: number, feedback: string) => {
+    async (enjoyment: number, mentalImprovement: number, feedback: string) => {
       const surveyPoints = (enjoyment + mentalImprovement) * 50 // 各回答につき最大500ポイント
       const feedbackBonus = feedback.trim().length > 0 ? 200 : 0 // 感想入力ボーナス
       const newTotalPoints = totalPoints + surveyPoints + feedbackBonus
 
-      
       setTotalPoints(newTotalPoints)
+
+      // Supabaseに基本データを送信
+      if (supabase && isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase.from("pervasiveness_responses").insert({
+            total_points: newTotalPoints,
+            all_user_answers: allUserAnswers,
+            enjoyment_rating: enjoyment,
+            improvement_rating: mentalImprovement,
+            affiliate_clicked: false, // 初期値はfalse
+          }).select('id').single()
+          
+          if (error) {
+            console.error("データの保存に失敗しました:", error)
+          } else {
+            console.log("基本データが正常に保存されました", data)
+            // レスポンスIDを保存（アフィリエイトクリック時の更新用）
+            if (data?.id) {
+              localStorage.setItem('quiz_response_id', data.id.toString())
+            }
+          }
+        } catch (error) {
+          console.error("Supabaseへの送信中にエラーが発生しました:", error)
+        }
+      } else {
+        console.log("Supabase環境変数が設定されていないため、データ保存をスキップします")
+      }
+
       setGameState("result")
     },
-    [totalPoints],
+    [totalPoints, allUserAnswers],
   )
 
   const handleTimeUp = useCallback(() => {
     if (currentQuiz < quizzes.length - 1) {
       calculateTotalPoints()
+      setAllUserAnswers((prev) => [...prev, userAnswers.filter((answer) => answer.trim() !== "")])
       setPreviousAnswers(userAnswers)
       setCurrentQuiz(currentQuiz + 1)
       setUserAnswers([""])
     } else {
       // 最後のクイズで時間切れの場合、ポイント計算してから感想ページへ
       calculateTotalPoints()
+      setAllUserAnswers((prev) => [...prev, userAnswers.filter((answer) => answer.trim() !== "")])
       setGameState("survey")
     }
   }, [currentQuiz, userAnswers, calculateTotalPoints])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 to-green-300 flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-green-200 flex items-center justify-center relative overflow-hidden">
       <AnimatePresence mode="wait">
         {gameState === "intro" && <IntroPage key="intro" onStart={() => setGameState("quiz")} />}
         {gameState === "quiz" && (
@@ -1405,6 +1631,7 @@ const QuizGame = () => {
           <ResultPage
             key="result"
             totalPoints={totalPoints}
+            allUserAnswers={allUserAnswers}
             onRestart={restartQuiz}
             onExit={() => {
               // 状態を初期化
@@ -1412,9 +1639,10 @@ const QuizGame = () => {
               setTotalPoints(0)
               setUserAnswers([""])
               setPreviousAnswers([])
+              setAllUserAnswers([])
               setBackgroundPatternIndex(0)
               // イントロ画面に戻る
-              setGameState("intro")
+               window.location.href = "https://yume-webdesign.com" // ここに戻りたいURLを入力
             }}
           />
         )}
@@ -1424,4 +1652,3 @@ const QuizGame = () => {
 }
 
 export default QuizGame
-

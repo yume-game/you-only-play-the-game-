@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# 特定のファイルを除外
+setting.local.json
+config.local.js
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

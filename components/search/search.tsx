@@ -42,10 +42,10 @@ export function Search({ onSearch }: SearchProps) {
             placeholder="クイズを検索..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-12"
+            className="pl-10 h-12 rounded-full"
           />
         </div>
-        <Button type="submit" className="h-12 px-6">
+        <Button type="submit" className="h-12 px-6 rounded-full">
           検索
         </Button>
       </form>

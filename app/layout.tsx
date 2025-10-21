@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from 'next/font/google';
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 // Geistフォントの設定（現在のコード）
 const geistSans = Geist({
@@ -16,9 +17,10 @@ const geistMono = Geist_Mono({
 
 // メタデータ（森テーマのタイトルと説明に変更）
 export const metadata: Metadata = {
-  title: "クイズマスター - 楽しく学べるクイズポータル",
+  title: "メンタルゲーム",
   description:
-    "様々なジャンルのクイズに挑戦し、知識を広げましょう。友達と競争したり、ランキングに参加したりして楽しめます。",
+    "ドーパミンの知識とメンタルヘルスの知識の融合で、遊んでるだけで気持ちが楽になる。",
+  icons: '/image/icon.png', // シンプルな設定
 };
 
 export default function RootLayout({
@@ -26,19 +28,41 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // メンテナンスモードのチェック
+  const isMaintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
+  
   return (
     <html lang="ja">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        {children}
-      </body>
-      <body>
-        {children}
-        {/* 2. Analyticsコンポーネントを追加（bodyの閉じタグの直前） */}
-        <Analytics />
+        {isMaintenanceMode ? (
+          <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-400 via-blue-500 to-purple-600">
+            <div className="bg-white bg-opacity-95 rounded-xl p-8 shadow-2xl text-center max-w-2xl mx-4">
+              <div className="text-6xl mb-6">🔧</div>
+              <h1 className="text-4xl font-bold text-gray-800 mb-4">メンテナンス中</h1>
+              <p className="text-xl text-gray-600 mb-6">
+                現在サービスの改善作業を行っています。<br />
+                しばらくお待ちください。
+              </p>
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {children}
+            {/* Analyticsコンポーネント */}
+            <Analytics mode="production" />
+            <SpeedInsights />
+          </>
+        )}
       </body>
     </html>
   );
 }
+
 
