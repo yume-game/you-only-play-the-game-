@@ -11,6 +11,8 @@ import DarkAnimationCanvas from "@/components/animations/DarkAnimationCanvas"
 import ButtonAnimationCanvas from "@/components/animations/ButtonAnimationCanvas"
 import TransitionCanvas from "@/components/animations/TransitionCanvas"
 import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { thanksTranslations, type ThanksTranslationKey } from "@/locales/thanks-translations"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -55,143 +57,143 @@ type ActionPlan = {
 
 const quizzes: Quiz[] = [
   {
-    question: "今あなたの欲しい物やことは何ですか？",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho1 (2).png"],
-      スマホ: ["/image/worth1"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho2.png"],
-      スマホ: ["/image/worth52"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho3.png"],
-      スマホ: ["/image/worth31"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho4.png"],
-      スマホ: ["/image/worth41"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho5.png"],
-      スマホ: ["/image/worth51"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho6.png"],
-      スマホ: ["/image/worth6"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho7.png"],
-      スマホ: ["/image/worth7"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho8.png"],
-      スマホ: ["/image/worth8"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho9.png"],
-      スマホ: ["/image/worth9"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho10.png"],
-      スマホ: ["/image/worth10"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho11.png"],
-      スマホ: ["/image/worth11"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho12.png"],
-      スマホ: ["/image/worth12"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho13.png"],
-      スマホ: ["/image/worth13"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho14.png"],
-      スマホ: ["/image/worth14"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho15.png"],
-      スマホ: ["/image/worth15"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho16.png"],
-      スマホ: ["/image/worth16"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho17.png"],
-      スマホ: ["/image/worth17"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho18.png"],
-      スマホ: ["/image/worth18"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho19.png"],
-      スマホ: ["/image/worth19"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "人生のすべてにおいて、感謝していることを書いてください",
     画像: {
-      PC: ["/image/worthho20.png"],
-      スマホ: ["/image/worth20"],
+      PC: ["/image/art39.png"],
+      スマホ: ["/image/art39.png"],
     },
   },
 ]
@@ -376,6 +378,8 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
 }
 
 const IntroPage = ({ onStart }: { onStart: () => void }) => {
+  const { language } = useLanguage()
+  const t = (key: ThanksTranslationKey) => thanksTranslations[language][key]
   const [imagesLoaded, setImagesLoaded] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [allImages, setAllImages] = useState<string[]>([])
@@ -414,26 +418,34 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
           fill
           className="object-cover object-top"
           priority
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.style.display = 'none'
+            const parent = target.parentElement
+            if (parent && !parent.querySelector('.image-fallback')) {
+              const fallback = document.createElement('div')
+              fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+              fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+              parent.appendChild(fallback)
+            }
+          }}
         />
       </div>
 
       <div className="relative z-10 text-center space-y-6 bg-green-700 bg-opacity-70 p-8 rounded-lg max-w-2xl">
-        <h1 className="text-4xl font-bold text-white">後悔しない人生により近づきます！</h1>
+        <h1 className="text-4xl font-bold text-white">{t("intro_title")}</h1>
         <p className="text-lg text-white">
-          あなたが心の奥深くで求めているものを見つけることを目指します。その通りの行動をすることであなたは幸福度が高い人生を送れます。
-          1問30秒です。直感で答えてみましょう！ではいってらっしゃい！（※完全無料です。）
-        </p>
-        <p className="text-base text-red-300 font-bold">
-          ⚠️ 残り時間が過ぎると-50ptされます！
+          {t("intro_subtitle")}
+          {t("intro_description")}
         </p>
         <p className="text-base text-yellow-200 font-semibold">
-          あなたを守るため、個人情報は入力しないでください。　ex 　佐々木君がではなく　ｓ君がとしましょう。
+          {t("intro_privacy")}
         </p>
 
         {!imagesLoaded && allImages.length > 0 ? (
           <ImagePreloader images={allImages} onComplete={handleImagesLoaded} />
         ) : allImages.length === 0 ? (
-          <div className="text-white text-lg">デバイスを確認中...</div>
+          <div className="text-white text-lg">{t("intro_checking_device")}</div>
         ) : (
           <>
             {/* 利用規約セクション */}
@@ -443,7 +455,7 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
                   onClick={() => setIsTermsOpen(true)}
                   className="text-white underline hover:text-green-200 transition-colors"
                 >
-                  利用規約
+                  {t("intro_terms")}
                 </button>
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input
@@ -452,7 +464,7 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
                     className="w-8 h-8 rounded-full border-2 border-white cursor-pointer transition-all duration-300 hover:scale-125 hover:border-green-300 checked:scale-110 checked:bg-green-400"
                   />
-                  <span className="text-white">同意する</span>
+                  <span className="text-white">{t("intro_agree")}</span>
                 </label>
               </div>
 
@@ -463,7 +475,7 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
                   !agreedToTerms ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                スタート
+                {t("intro_start")}
               </Button>
             </div>
           </>
@@ -657,19 +669,8 @@ const QuizPage = ({
     }
   }, [animationTimer])
 
-  const generateQuestionText = (currentQuiz: number, allUserAnswers: string[][]) => {
-    if (currentQuiz === 0) {
-      return "あなたの欲しい物やことは何ですか？"
-    }
-
-    const previousAnswers = allUserAnswers[currentQuiz - 1] || []
-    if (previousAnswers.length > 0) {
-      const answersText = previousAnswers.join("、")
-      return `どうして「${answersText}」が欲しいのですか？`
-    }
-
-    return "どうして「前の問題の回答」が欲しいのですか？"
-  }
+  // 質問テキストを直接取得
+  const currentQuestion = quizzes[currentQuiz]?.question || ""
 
   const handleSubmitLocal = () => {
     // 回答が空の場合はアニメーションを表示しない
@@ -728,6 +729,17 @@ const QuizPage = ({
             fill
             className="object-cover object-top"
             priority
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+              const parent = target.parentElement
+              if (parent && !parent.querySelector('.image-fallback')) {
+                const fallback = document.createElement('div')
+                fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+                fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+                parent.appendChild(fallback)
+              }
+            }}
           />
         )}
 
@@ -739,6 +751,17 @@ const QuizPage = ({
             fill
             className="object-cover object-top"
             priority
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+              const parent = target.parentElement
+              if (parent && !parent.querySelector('.image-fallback')) {
+                const fallback = document.createElement('div')
+                fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+                fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+                parent.appendChild(fallback)
+              }
+            }}
           />
 
           {/* Canvas背景切り替えエフェクト */}
@@ -753,6 +776,17 @@ const QuizPage = ({
                 fill
                 className="object-cover object-top"
                 priority
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  const parent = target.parentElement
+                  if (parent && !parent.querySelector('.image-fallback')) {
+                    const fallback = document.createElement('div')
+                    fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+                    fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+                    parent.appendChild(fallback)
+                  }
+                }}
               />
             </div>
           )}
@@ -776,7 +810,7 @@ const QuizPage = ({
         <div className="relative z-10 flex flex-col h-full p-6">
           {/* 既存のコンテンツをここに配置 */}
           {/* 上部情報 */}
-          <div className="bg-white bg-opacity-90 rounded-b-lg p-4 md:relative md:top-0 fixed top-0 left-0 right-0 z-20">
+          <div className="bg-white bg-opacity-90 rounded-lg p-4 md:relative md:top-0 fixed top-0 left-0 right-0 z-20">
             {/* デスクトップレイアウト */}
             <div className="hidden md:flex flex-row justify-between items-center gap-2">
               <div className="text-green-600 text-sm font-medium">
@@ -809,7 +843,7 @@ const QuizPage = ({
           <div className="bg-white bg-opacity-90 rounded-lg p-8 mb-4 mt-32 md:mt-0">
             <div className="flex items-center justify-center gap-3">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 text-center leading-tight">
-                {generateQuestionText(currentQuiz, allUserAnswers)}
+                {currentQuestion}
               </h2>
               {/* デスクトップのみヘルプボタンを表示 */}
               <button
@@ -837,7 +871,7 @@ const QuizPage = ({
                     )}
                     <Input
                       type="text"
-                      placeholder={`回答 ${index + 1}`}
+                      placeholder="回答"
                       value={answer}
                       onChange={(e) => updateAnswer(index, e.target.value)}
                       className={`w-full bg-white bg-opacity-90 text-gray-800 placeholder-gray-500 transition-all duration-300 ${
@@ -928,7 +962,7 @@ const QuizPage = ({
                           d="M13 10V3L4 14h7v7l9-11h-7z"
                         />
                       </svg>
-                      {isNextButtonAnimating ? "移動中..." : "欲求が見つかった。（次のステージへ）"}
+                      {isNextButtonAnimating ? "移動中..." : "感謝しきった。（次のステージへ）"}
                       <svg
                         className={`w-5 h-5 ${isNextButtonAnimating ? "animate-bounce" : ""}`}
                         fill="none"
@@ -995,34 +1029,9 @@ const QuizPage = ({
             {/* コンテンツ */}
             <div className="p-6 overflow-y-auto flex-1">
               <div className="space-y-4 text-gray-700">
-                {isGoldenQuestion(currentQuiz) ? (
-                  <>
-                    <p className="text-lg font-semibold text-yellow-600">
-                      🌟 ゴールド問題！ 300pt獲得のチャンス！
-                    </p>
-                    <p>
-                      「回答する」ボタンをあなたが求めているものの深い目的が探し出せるまで押してください。
-                    </p>
-                    <p>
-                      よくわからなくなったら、どんな理由でそれが大事なの？、それがしたいの？、それがほしいの？、それがあなたにとって重要なの？と解いてみてください。
-                    </p>
-                    <p>
-                      見つかったら「欲求が見つかった（次のステージへ）」ボタンを押してください。
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p>
-                      「回答する」ボタンをあなたが求めているものの深い目的が探し出せるまで押してください。
-                    </p>
-                    <p>
-                      よくわからなくなったら、どんな理由でそれが大事なの？、それがしたいの？、それがほしいの？、それがあなたにとって重要なの？と解いてみてください。
-                    </p>
-                    <p>
-                      見つかったら「欲求が見つかった（次のステージへ）」ボタンを押してください。
-                    </p>
-                  </>
-                )}
+                <p className="text-lg font-semibold text-green-600">
+                  本気を出せばイスなどにも感謝できます
+                </p>
               </div>
             </div>
 
@@ -1055,6 +1064,9 @@ const ResultPage = ({
   onRestart: () => void
   onExit: () => void
 }) => {
+  const { language } = useLanguage()
+  const t = (key: ThanksTranslationKey) => thanksTranslations[language][key]
+
   // ページマウント時に上までスクロール
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -1163,18 +1175,29 @@ const ResultPage = ({
           fill
           className="object-cover object-top"
           priority
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.style.display = 'none'
+            const parent = target.parentElement
+            if (parent && !parent.querySelector('.image-fallback')) {
+              const fallback = document.createElement('div')
+              fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+              fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+              parent.appendChild(fallback)
+            }
+          }}
         />
       </div>
 
       <div className="relative z-10 max-w-4xl w-full">
         {/* 統合された診断結果とアフィリエイトセクション */}
         <div className="text-center bg-white bg-opacity-95 rounded-xl p-8 shadow-2xl">
-          <h1 className="text-4xl font-bold text-green-800 mb-6">あなたの価値観診断結果</h1>
+          <h1 className="text-4xl font-bold text-green-800 mb-6">{t("result_title")}</h1>
 
-          <div className="text-5xl font-bold text-green-700 mb-3">🏆合計ポイント {totalPoints}pt</div>
-          <div className="text-xl font-bold text-green-300 mb-6">🏆1200pt/全国平均</div>
+          <div className="text-5xl font-bold text-green-700 mb-3">🏆{t("result_total_points")} {totalPoints}{t("points")}</div>
+          <div className="text-xl font-bold text-green-300 mb-6">🏆1200{t("points")}/{t("result_average_points")}</div>
 
-          <div className="text-2xl font-bold text-purple-600 mb-6">★yumeのゲーム　　スクショしてSNSに投稿しよう！★</div>
+          <div className="text-2xl font-bold text-purple-600 mb-6">{t("result_share_message")}</div>
 
 
           {/* 選択した価値観と行動プラン */}
@@ -1183,7 +1206,7 @@ const ResultPage = ({
             {selectedAnswers.length > 0 && (
               <div className="bg-green-50 rounded-lg p-6">
                 <h2 className="text-2xl font-bold text-green-800 mb-4 flex items-center gap-2">
-                  💎 あなたが選んだ価値観
+                  {t("result_selected_values_title")}
                 </h2>
                 <div className="space-y-3">
                   {selectedAnswers.map((answer, index) => (
@@ -1202,7 +1225,7 @@ const ResultPage = ({
             {actionPlans.length > 0 && (
               <div className="bg-blue-50 rounded-lg p-6">
                 <h2 className="text-2xl font-bold text-blue-800 mb-4 flex items-center gap-2">
-                  🎯 あなたの行動プラン
+                  {t("result_action_plan_title")}
                 </h2>
                 <div className="space-y-3">
                   {actionPlans.map((plan, index) => (
@@ -1213,13 +1236,13 @@ const ResultPage = ({
                         </span>
                         <div className="flex-1">
                           <p className="text-gray-700 mb-1">
-                            <span className="font-bold text-blue-700">いつ:</span> {plan.when || "未入力"}
+                            <span className="font-bold text-blue-700">{t("result_action_plan_when")}</span> {plan.when || t("result_action_plan_not_entered")}
                           </p>
                           <p className="text-gray-700 mb-1">
-                            <span className="font-bold text-blue-700">行動:</span> {plan.action || "未入力"}
+                            <span className="font-bold text-blue-700">{t("result_action_plan_action")}</span> {plan.action || t("result_action_plan_not_entered")}
                           </p>
                           <p className="text-gray-700">
-                            <span className="font-bold text-blue-700">なぜ:</span> {plan.motivation || "未入力"}
+                            <span className="font-bold text-blue-700">{t("result_action_plan_why")}</span> {plan.motivation || t("result_action_plan_not_entered")}
                           </p>
                         </div>
                       </div>
@@ -1230,22 +1253,24 @@ const ResultPage = ({
             )}
           </div>
 
-          {/* アフィリエイト部分を同じカード内に統合 */}
-          <div className="mt-8 pt-8 border-t-2 border-gray-200">
-            <h2 className="text-2xl font-bold text-orange-600 mt-8">{affiliateTextPattern.headline}</h2>
+          {/* アフィリエイト部分を同じカード内に統合 - 日本語版のみ */}
+          {language === "ja" && (
+            <div className="mt-8 pt-8 border-t-2 border-gray-200">
+              <h2 className="text-2xl font-bold text-orange-600 mt-8">{affiliateTextPattern.headline}</h2>
 
-            <div className="text-center">
-              <AffiliateComponent className="mx-auto" affiliateTextPattern={affiliateTextPattern} />
+              <div className="text-center">
+                <AffiliateComponent className="mx-auto" affiliateTextPattern={affiliateTextPattern} />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="flex gap-4 justify-center">
           <Button onClick={onRestart} className="bg-green-500 hover:bg-green-600 text-white px-8 py-3">
-            もう一度診断する
+            {t("result_restart_button")}
           </Button>
           <Button onClick={onExit} className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3">
-            終了
+            {t("result_exit_button")}
           </Button>
         </div>
       </div>
@@ -1253,489 +1278,17 @@ const ResultPage = ({
   )
 }
 
-// 価値観選択ページ（SummaryPage）
-const SummaryPage = ({
-  allUserAnswers,
-  selectedAnswers,
-  onAnswerSelect,
-  onContinue,
-  onExit,
-}: {
-  allUserAnswers: string[][]
-  selectedAnswers: string[]
-  onAnswerSelect: (answer: string) => void
-  onContinue: () => void
-  onExit: () => void
-}) => {
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
-
-  // 全ての回答を平坦化して重複を除去
-  const allAnswers = Array.from(new Set(allUserAnswers.flat().filter((answer) => answer.trim() !== "")))
-  const [showConfetti, setShowConfetti] = useState(false)
-
-  const handleContinue = () => {
-    if (selectedAnswers.length === 0) return
-    setShowConfetti(true)
-    setTimeout(() => {
-      setShowConfetti(false)
-      onContinue()
-    }, 1000)
-  }
-
-  return (
-    <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in">
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/image/background-bright-forest-road.png"
-          alt="価値観選択背景"
-          fill
-          className="object-cover object-top"
-          priority
-        />
-      </div>
-
-      {/* Confetti Canvas Animation */}
-      <ConfettiCanvas isActive={showConfetti} duration={1000} particleCount={30} points={300} />
-
-      <div className="relative z-10 max-w-3xl w-full space-y-6">
-        <div className="text-center bg-white bg-opacity-95 rounded-xl p-8 shadow-2xl">
-          <h1 className="text-3xl font-bold text-green-800 mb-4">価値観を選択してください</h1>
-          <p className="text-lg text-gray-700 mb-2">
-            あなたの回答の中から最大3つまで選んでください
-          </p>
-          <p className="text-sm text-gray-600 mb-6">選択済み: {selectedAnswers.length}/3</p>
-
-          {/* 回答リスト */}
-          <div className="space-y-3 mb-8">
-            {allAnswers.map((answer, index) => {
-              const isSelected = selectedAnswers.includes(answer)
-              const canSelect = selectedAnswers.length < 3 || isSelected
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => canSelect && onAnswerSelect(answer)}
-                  disabled={!canSelect}
-                  className={`w-full p-4 rounded-lg text-left transition-all duration-200 ${
-                    isSelected
-                      ? "bg-green-500 text-white shadow-lg transform scale-105"
-                      : canSelect
-                        ? "bg-white text-gray-800 hover:bg-gray-50 hover:shadow-md border-2 border-gray-200"
-                        : "bg-gray-200 text-gray-500 cursor-not-allowed border-2 border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        isSelected ? "border-white bg-white" : "border-gray-400"
-                      }`}
-                    >
-                      {isSelected && <div className="w-3 h-3 bg-green-500 rounded-full" />}
-                    </div>
-                    <span className="font-medium">{answer}</span>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* ボタン */}
-          <div className="space-y-4">
-            <Button
-              onClick={handleContinue}
-              disabled={selectedAnswers.length === 0}
-              className={`w-full py-4 text-lg font-bold ${
-                selectedAnswers.length > 0
-                  ? "bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white"
-                  : "bg-gray-400 text-gray-200 cursor-not-allowed"
-              }`}
-            >
-              次へ進む ({selectedAnswers.length}個選択済み)
-            </Button>
-
-            <Button
-              onClick={onExit}
-              className="w-full text-green-600 bg-transparent hover:text-green-700 hover:bg-green-50 border-0"
-            >
-              終了
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// 行動プランページ（ActionPlanPage）
-const ActionPlanPage = ({
-  selectedAnswers,
-  actionPlans,
-  totalPoints,
-  setTotalPoints,
-  onActionPlanAdd,
-  onComplete,
-  onTimeUp,
-  onExit,
-  onFieldComplete,
-}: {
-  selectedAnswers: string[]
-  actionPlans: ActionPlan[]
-  totalPoints: number
-  setTotalPoints: (value: number | ((prev: number) => number)) => void
-  onActionPlanAdd: (when: string, action: string, motivation: string) => void
-  onComplete: () => void
-  onTimeUp: () => void
-  onExit: () => void
-  onFieldComplete: () => void
-}) => {
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
-
-  const [currentPlan, setCurrentPlan] = useState<ActionPlan>({ when: "", action: "", motivation: "" })
-  const [showConfetti, setShowConfetti] = useState(false)
-  const [showDarkAnimation, setShowDarkAnimation] = useState(false)
-  const getInitialTime = () => Math.max(10, 40 - (actionPlans.length * 3))
-  const [timeLeft, setTimeLeft] = useState(getInitialTime())
-  const [timeUpCount, setTimeUpCount] = useState(0)
-  const [completedFields, setCompletedFields] = useState<Set<string>>(new Set())
-  const [fieldAnimations, setFieldAnimations] = useState<{ [key: string]: boolean }>({})
-  const [animationTimer, setAnimationTimer] = useState<NodeJS.Timeout | null>(null)
-
-  // タイマーの色
-  const getTimeColor = (timeLeft: number, timeUpCount: number) => {
-    if (timeLeft <= 10) return "text-red-500 font-bold"
-    if (timeUpCount === 0) return "text-green-500"
-    if (timeUpCount === 1) return "text-amber-800"
-    if (timeUpCount === 2) return "text-orange-700"
-    if (timeUpCount === 3) return "text-red-700"
-    if (timeUpCount >= 4) return "text-red-600"
-    return "text-green-500"
-  }
-
-  // タイマー
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(timer)
-          setTimeUpCount((prev) => prev + 1)
-          setShowDarkAnimation(true)
-          onTimeUp()
-
-          setTimeout(() => {
-            setShowDarkAnimation(false)
-          }, 1000)
-
-          setTimeout(() => {
-            setTimeLeft(getInitialTime())
-          }, 100)
-
-          return 0
-        }
-        return prevTime - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [onTimeUp])
-
-  useEffect(() => {
-    return () => {
-      if (animationTimer) {
-        clearTimeout(animationTimer)
-      }
-    }
-  }, [animationTimer])
-
-  const handleInputChange = (field: keyof ActionPlan, value: string) => {
-    const previousValue = currentPlan[field] || ""
-    setCurrentPlan((prev) => ({ ...prev, [field]: value }))
-
-    // 入力が完了した時（空から文字が入力された時）に草エフェクト
-    if (previousValue === "" && value.trim() !== "") {
-      const animationKey = `field-${field}`
-      setFieldAnimations((prev) => ({ ...prev, [animationKey]: true }))
-
-      if (animationTimer) {
-        clearTimeout(animationTimer)
-      }
-
-      const newTimer = setTimeout(() => {
-        setFieldAnimations({})
-      }, 1000)
-      setAnimationTimer(newTimer)
-    }
-  }
-
-  const handleAdd = () => {
-    if (currentPlan.when.trim() || currentPlan.action.trim() || currentPlan.motivation.trim()) {
-      onActionPlanAdd(currentPlan.when, currentPlan.action, currentPlan.motivation)
-      setCurrentPlan({ when: "", action: "", motivation: "" })
-      setCompletedFields(new Set())
-      setShowConfetti(true)
-      setTimeLeft(Math.max(10, 40 - ((actionPlans.length + 1) * 3)))
-      setTimeout(() => {
-        setShowConfetti(false)
-      }, 1000)
-    }
-  }
-
-  const hasValidPlan = currentPlan.when.trim() !== "" || currentPlan.action.trim() !== "" || currentPlan.motivation.trim() !== ""
-  const isGoldenPlan = () => (actionPlans.length + 1) % 3 === 0
-
-  return (
-    <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in">
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/image/background-bright-forest-road.png"
-          alt="行動プラン背景"
-          fill
-          className="object-cover object-top"
-          priority
-        />
-      </div>
-
-      {/* Confetti Canvas Animation */}
-      <ConfettiCanvas
-        isActive={showConfetti}
-        duration={1000}
-        particleCount={50}
-        points={
-          completedFields.has("when") && !completedFields.has("action")
-            ? 100
-            : completedFields.has("action") && completedFields.size === 2
-              ? 200
-              : isGoldenPlan()
-                ? 900
-                : 600
-        }
-      />
-
-      {/* Dark Animation Canvas - タイムアップ時 */}
-      <DarkAnimationCanvas isActive={showDarkAnimation} duration={1000} />
-
-      <div className="relative z-10 max-w-3xl w-full space-y-6">
-        <div className="bg-white bg-opacity-95 rounded-xl p-8 shadow-2xl">
-          {/* ヘッダー */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="text-green-600 text-lg font-bold">行動プラン作成</div>
-            <div className={`text-2xl font-extrabold ${getTimeColor(timeLeft, timeUpCount)}`}>
-              ⏱️残り時間: {timeLeft}秒
-            </div>
-            <div className="text-green-600 text-3xl font-extrabold">🏆{totalPoints}pt</div>
-          </div>
-
-          <h1 className="text-3xl font-bold text-green-800 mb-2 text-center">行動プランを作成しましょう</h1>
-          <p className="text-lg text-green-600 mb-6 text-center">具体的にあなたの価値観通りの行動を考えておきましょう。</p>
-
-          {/* 選択された価値観 */}
-          <div className="bg-green-50 rounded-lg p-4 mb-6">
-            <h2 className="text-xl font-bold text-green-800 mb-3">💎 あなたが選んだ価値観</h2>
-            <div className="space-y-2">
-              {selectedAnswers.map((answer, index) => (
-                <div key={index} className="flex items-center gap-3 p-2 bg-white rounded-md">
-                  <span className="bg-green-500 text-white font-bold min-w-[28px] h-7 rounded-full flex items-center justify-center text-sm">
-                    {index + 1}
-                  </span>
-                  <span className="text-green-900 font-medium">{answer}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 行動プラン入力フォーム */}
-          <div
-            className={`rounded-lg p-6 mb-6 ${
-              isGoldenPlan()
-                ? "bg-gradient-to-br from-yellow-50 via-yellow-100 to-amber-50 border-4 border-yellow-400 shadow-xl shadow-yellow-400/50 animate-pulse"
-                : "bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50 border-2 border-blue-200 shadow-lg"
-            } transition-all duration-500`}
-          >
-            <h2
-              className={`text-xl font-bold mb-4 ${
-                isGoldenPlan() ? "text-yellow-800" : "text-blue-800"
-              }`}
-            >
-              🎯 新しい行動プラン
-            </h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">いつ？</label>
-                <div className="flex gap-2">
-                  <div className={`relative transition-all duration-500 flex-1 ${fieldAnimations['field-when'] ? "bg-green-50 rounded-lg p-1" : ""}`}>
-                    {fieldAnimations['field-when'] && (
-                      <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-green-500 text-xl z-10 animate-bounce">
-                        🌿
-                      </span>
-                    )}
-                    <Input
-                      type="text"
-                      placeholder="例：毎朝起きたとき、仕事が終わったら"
-                      value={currentPlan.when}
-                      onChange={(e) => handleInputChange("when", e.target.value)}
-                      className={`w-full ${fieldAnimations['field-when'] ? "border-green-400 shadow-lg" : ""}`}
-                    />
-                  </div>
-                  <Button
-                    onClick={() => {
-                      if (currentPlan.when.trim() && !completedFields.has("when")) {
-                        onFieldComplete()
-                        setCompletedFields((prev) => new Set(prev).add("when"))
-                        setShowConfetti(true)
-                        setTimeout(() => setShowConfetti(false), 1000)
-                      }
-                    }}
-                    disabled={!currentPlan.when.trim() || completedFields.has("when")}
-                    className={`px-4 py-2 text-sm font-medium ${
-                      completedFields.has("when")
-                        ? "bg-green-500 text-white cursor-default"
-                        : !currentPlan.when.trim()
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-blue-500 text-white hover:bg-blue-600"
-                    }`}
-                  >
-                    {completedFields.has("when") ? "✓" : "回答する"}
-                  </Button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">どんな行動？</label>
-                <div className="flex gap-2">
-                  <div className={`relative transition-all duration-500 flex-1 ${fieldAnimations['field-action'] ? "bg-green-50 rounded-lg p-1" : ""}`}>
-                    {fieldAnimations['field-action'] && (
-                      <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-green-500 text-xl z-10 animate-bounce">
-                        🌿
-                      </span>
-                    )}
-                    <Input
-                      type="text"
-                      placeholder="例：5分間瞑想する、感謝の気持ちを書く"
-                      value={currentPlan.action}
-                      onChange={(e) => handleInputChange("action", e.target.value)}
-                      className={`w-full ${fieldAnimations['field-action'] ? "border-green-400 shadow-lg" : ""}`}
-                      disabled={!completedFields.has("when")}
-                    />
-                  </div>
-                  <Button
-                    onClick={() => {
-                      if (currentPlan.action.trim() && !completedFields.has("action")) {
-                        setTotalPoints((prev) => prev + 200)
-                        setCompletedFields((prev) => new Set(prev).add("action"))
-                        setShowConfetti(true)
-                        setTimeout(() => setShowConfetti(false), 1000)
-                      }
-                    }}
-                    disabled={!currentPlan.action.trim() || completedFields.has("action") || !completedFields.has("when")}
-                    className={`px-4 py-2 text-sm font-medium ${
-                      completedFields.has("action")
-                        ? "bg-green-500 text-white cursor-default"
-                        : !currentPlan.action.trim() || !completedFields.has("when")
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-blue-500 text-white hover:bg-blue-600"
-                    }`}
-                  >
-                    {completedFields.has("action") ? "✓" : "回答する"}
-                  </Button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">その行動をしたくないときに、自分になんと声をかける？</label>
-                <Input
-                  type="text"
-                  placeholder="例：これをやった方がもっと成長できるよ"
-                  value={currentPlan.motivation}
-                  onChange={(e) => handleInputChange("motivation", e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            <Button
-              onClick={handleAdd}
-              disabled={!hasValidPlan}
-              className={`w-full mt-6 py-4 text-base font-bold ${
-                !hasValidPlan
-                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : isGoldenPlan()
-                    ? "bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 text-white animate-pulse hover:animate-none shadow-xl shadow-yellow-500/50 border-2 border-yellow-300 hover:border-yellow-100 transform hover:scale-105"
-                    : "bg-gradient-to-r from-green-500 via-green-600 to-green-700 hover:from-green-600 hover:via-green-700 hover:to-green-800 text-white animate-pulse hover:animate-none shadow-xl shadow-green-500/50 border-2 border-green-400 hover:border-green-200 transform hover:scale-105"
-              } transition-all duration-300 rounded-xl`}
-            >
-              <span className="flex items-center justify-center gap-2">
-                <span>追加する</span>
-                <span className="text-sm">
-                  {isGoldenPlan() ? "+900pt 🏆" : "+600pt"}
-                </span>
-              </span>
-            </Button>
-          </div>
-
-          {/* 完了ボタン */}
-          <Button
-            onClick={onComplete}
-            className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white py-8 text-2xl font-extrabold mb-4 shadow-2xl shadow-purple-500/50 transform hover:scale-105 transition-all duration-300"
-          >
-            行動プランを書き終えた（次のステージへ）
-          </Button>
-
-          {/* 作成済みの行動プラン */}
-          {actionPlans.length > 0 && (
-            <div className="bg-green-50 rounded-lg p-6 mb-6">
-              <h2 className="text-xl font-bold text-green-800 mb-4">✅ 作成済みの行動プラン</h2>
-              <div className="space-y-3">
-                {actionPlans.map((plan, index) => (
-                  <div key={index} className="bg-white rounded-lg p-4 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <span className="bg-blue-500 text-white font-bold min-w-[28px] h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0">
-                        {index + 1}
-                      </span>
-                      <div className="flex-1 text-sm">
-                        <p className="text-gray-700">
-                          <span className="font-bold text-blue-700">いつ:</span> {plan.when || "未入力"}
-                        </p>
-                        <p className="text-gray-700">
-                          <span className="font-bold text-blue-700">行動:</span> {plan.action || "未入力"}
-                        </p>
-                        <p className="text-gray-700">
-                          <span className="font-bold text-blue-700">なぜ:</span> {plan.motivation || "未入力"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 終了ボタン */}
-          <Button
-            onClick={onExit}
-            className="w-full text-green-600 bg-transparent hover:text-green-700 hover:bg-green-50 border-0"
-          >
-            終了
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 const QuizGame = () => {
   const router = useRouter()
-  const [gameState, setGameState] = useState<"intro" | "quiz" | "summary" | "action" | "result">("intro")
+  const [gameState, setGameState] = useState<"intro" | "quiz" | "result">("intro")
   const [currentQuiz, setCurrentQuiz] = useState(0)
   const [userAnswers, setUserAnswers] = useState<string[]>([""])
   const [allUserAnswers, setAllUserAnswers] = useState<string[][]>([])
   const [totalPoints, setTotalPoints] = useState(0)
   const [enjoymentRating, setEnjoymentRating] = useState(5)
   const [improvementRating, setImprovementRating] = useState(5)
-  // 新しいステート：価値観選択と行動プラン
+  // 新しいステート：価値観選択と行動プラン（削除予定だが、ResultPageで使用されているため残す）
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([])
   const [actionPlans, setActionPlans] = useState<ActionPlan[]>([])
 
@@ -1766,12 +1319,12 @@ const QuizGame = () => {
   }
 
   const handleEndQuiz = () => {
-    // 現在の回答を保存してからサマリーページ（価値観選択）へ移行
+    // 現在の回答を保存してから直接結果ページへ移行
     const currentAnswers = userAnswers.filter((answer) => answer.trim() !== "")
     if (currentAnswers.length > 0) {
       setAllUserAnswers((prev) => [...prev, currentAnswers])
     }
-    setGameState("summary")
+    setGameState("result")
   }
 
   const handleDirectToAffiliate = () => {
@@ -1780,43 +1333,6 @@ const QuizGame = () => {
 
   const handleTimeUp = () => {
     setTotalPoints((prev) => prev - 50)
-  }
-
-
-  // 価値観選択のハンドラー
-  const handleAnswerSelect = (answer: string) => {
-    setSelectedAnswers((prev) => {
-      if (prev.includes(answer)) {
-        // 既に選択されていれば削除
-        return prev.filter((a) => a !== answer)
-      } else if (prev.length < 3) {
-        // 最大3つまで選択可能
-        return [...prev, answer]
-      }
-      return prev
-    })
-  }
-
-  // 価値観選択から行動プランページへ進む
-  const handleContinueToAction = () => {
-    setGameState("action")
-  }
-
-  // フィールド完了時に100pt追加
-  const handleFieldComplete = () => {
-    setTotalPoints((prev) => prev + 100)
-  }
-
-  // 行動プランの追加ハンドラー（3回に1回は900pt、それ以外は600pt）
-  const handleActionPlanAdd = (when: string, action: string, motivation: string) => {
-    setActionPlans((prev) => [...prev, { when, action, motivation }])
-    const isGolden = (actionPlans.length + 1) % 3 === 0
-    setTotalPoints((prev) => prev + (isGolden ? 900 : 600))
-  }
-
-  // 行動プランから最終ページへ
-  const handleActionComplete = () => {
-    setGameState("result")
   }
 
   const handleRestart = () => {
@@ -1850,30 +1366,6 @@ const QuizGame = () => {
           onEndQuiz={handleEndQuiz}
           onDirectToAffiliate={handleDirectToAffiliate}
           onTimeUp={handleTimeUp}
-        />
-      )}
-      {gameState === "summary" && (
-        <SummaryPage
-          key="summary"
-          allUserAnswers={allUserAnswers}
-          selectedAnswers={selectedAnswers}
-          onAnswerSelect={handleAnswerSelect}
-          onContinue={handleContinueToAction}
-          onExit={handleDirectToAffiliate}
-        />
-      )}
-      {gameState === "action" && (
-        <ActionPlanPage
-          key="action"
-          selectedAnswers={selectedAnswers}
-          actionPlans={actionPlans}
-          totalPoints={totalPoints}
-          setTotalPoints={setTotalPoints}
-          onActionPlanAdd={handleActionPlanAdd}
-          onComplete={handleActionComplete}
-          onTimeUp={handleTimeUp}
-          onExit={handleDirectToAffiliate}
-          onFieldComplete={handleFieldComplete}
         />
       )}
       {gameState === "result" && (

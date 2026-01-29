@@ -3,7 +3,8 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { Play, Music, Twitter } from "lucide-react"
+import { Play, Music, Twitter, Globe } from "lucide-react"
+import { useLanguage } from "@/contexts/LanguageContext"
 
 interface HeaderProps {
   onPopularQuizzes?: () => void
@@ -11,26 +12,39 @@ interface HeaderProps {
 
 export function Header({ onPopularQuizzes }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { language, setLanguage } = useLanguage();
+
+  const toggleLanguage = () => {
+    setLanguage(language === "ja" ? "en" : "ja");
+  };
 
   return (
     <header className="bg-forest-200 border-b border-forest-300">
       <div className="container mx-auto py-4 px-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-forest-700">yumeのメンタルゲーム</h1>
-        
+        <h1 className="text-2xl font-bold text-forest-700">
+          {language === "ja" ? "yumeのメンタルゲーム" : "yume's Mental Games"}
+        </h1>
+
         {/* デスクトップナビゲーション */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="/" className="text-forest-600 hover:text-forest-800 transition-colors">
-            ホーム
-          </Link>
           {onPopularQuizzes && (
             <button
               type="button"
               onClick={onPopularQuizzes}
               className="text-forest-600 hover:text-forest-800 transition-colors"
             >
-              人気クイズ
+              {language === "ja" ? "人気クイズ" : "Popular Quizzes"}
             </button>
           )}
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-forest-300 hover:bg-forest-400 text-forest-700 transition-colors"
+            aria-label="Toggle language"
+          >
+            <Globe size={18} />
+            <span className="font-semibold">{language === "ja" ? "EN" : "日本語"}</span>
+          </button>
         </nav>
         
         {/* モバイルメニューボタン */}
@@ -60,20 +74,26 @@ export function Header({ onPopularQuizzes }: HeaderProps) {
         
         {/* モバイルメニュー（オプション） */}
         {isMenuOpen && (
-          <div className="absolute top-16 left-0 right-0 bg-forest-200 p-4 md:hidden border-b border-forest-300">
+          <div className="absolute top-16 left-0 right-0 bg-forest-200 p-4 md:hidden border-b border-forest-300 z-50">
             <nav className="flex flex-col space-y-4">
-              <Link href="/" className="text-forest-600 hover:text-forest-800 transition-colors">
-                ホーム
-              </Link>
               {onPopularQuizzes && (
                 <button
                   type="button"
                   onClick={onPopularQuizzes}
                   className="text-forest-600 hover:text-forest-800 transition-colors text-left"
                 >
-                  人気クイズ
+                  {language === "ja" ? "人気クイズ" : "Popular Quizzes"}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={toggleLanguage}
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-forest-300 hover:bg-forest-400 text-forest-700 transition-colors w-fit"
+                aria-label="Toggle language"
+              >
+                <Globe size={18} />
+                <span className="font-semibold">{language === "ja" ? "EN" : "日本語"}</span>
+              </button>
 
               {/* SNSリンク */}
               <div className="pt-2 border-t border-forest-300">

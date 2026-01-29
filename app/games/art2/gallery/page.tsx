@@ -7,122 +7,134 @@ const artworks = [
   {
     id: 1,
     title: "静寂の朝",
-    image: "/image/art1.png",
+    image: "/image/art21.png",
     description: "新しい一日の始まりに感じる静けさと希望",
   },
   {
     id: 2,
     title: "心の庭",
-    image: "/image/art2.png",
+    image: "/image/art22.png",
     description: "内なる平和を見つける場所",
   },
   {
     id: 3,
     title: "優しい波",
-    image: "/image/art3.png",
+    image: "/image/art23.png",
     description: "心を洗い流す穏やかな波の音",
   },
   {
     id: 4,
     title: "森の呼吸",
-    image: "/image/art4.png",
+    image: "/image/art24.png",
     description: "自然の中で感じる生命の息吹",
   },
   {
     id: 5,
     title: "希望の光",
-    image: "/image/art5.png",
+    image: "/image/art25.png",
     description: "暗闇の中にも必ず光は差し込む",
   },
   {
     id: 6,
     title: "静かな湖",
-    image: "/image/art6.png",
+    image: "/image/art26.png",
     description: "心を映す鏡のような静けさ",
   },
   {
     id: 7,
     title: "花の微笑み",
-    image: "/image/art7.png",
+    image: "/image/art27.png",
     description: "小さな美しさに気づく喜び",
   },
   {
     id: 8,
     title: "夕暮れの空",
-    image: "/image/art8.png",
+    image: "/image/art28.png",
     description: "一日の終わりに感じる安らぎ",
   },
   {
     id: 9,
     title: "雨上がり",
-    image: "/image/art9.png",
+    image: "/image/art29.png",
     description: "困難の後に訪れる清々しさ",
   },
   {
     id: 10,
     title: "星空の約束",
-    image: "/image/art10.png",
+    image: "/image/art30.png",
     description: "無限の可能性を秘めた夜空",
   },
   {
     id: 11,
     title: "心の橋",
-    image: "/image/art11.png",
+    image: "/image/art31.png",
     description: "過去と未来をつなぐ架け橋",
   },
   {
     id: 12,
     title: "静寂の雪",
-    image: "/image/art12.png",
+    image: "/image/art32.png",
     description: "全てを包み込む優しい静けさ",
   },
   {
     id: 13,
     title: "朝露の輝き",
-    image: "/image/art13.png",
+    image: "/image/art33.png",
     description: "小さな奇跡に満ちた朝",
   },
   {
     id: 14,
     title: "風の歌",
-    image: "/image/art14.png",
+    image: "/image/art34.png",
     description: "自然が奏でる癒しのメロディー",
   },
   {
     id: 15,
     title: "月の静けさ",
-    image: "/image/art15.png",
+    image: "/image/art35.png",
     description: "夜の静寂がもたらす安らぎ",
   },
   {
     id: 16,
     title: "虹の希望",
-    image: "/image/art16.png",
+    image: "/image/art36.png",
     description: "試練の後に現れる美しい約束",
   },
   {
     id: 17,
     title: "秋の調べ",
-    image: "/image/art17.png",
+    image: "/image/art37.png",
     description: "変化の美しさを受け入れる心",
   },
   {
     id: 18,
     title: "心の灯火",
-    image: "/image/art18.png",
+    image: "/image/art38.png",
     description: "小さな光が照らす希望の道",
   },
   {
     id: 19,
     title: "永遠の今",
-    image: "/image/art19.png",
+    image: "/image/art39.png",
     description: "この瞬間に存在する全ての美しさ",
   },
   {
     id: 20,
     title: "希望の種",
-    image: "/image/art20.png",
+    image: "/image/art40.png",
     description: "未来へと続く小さな希望",
+  },
+  {
+    id: 21,
+    title: "夢の扉",
+    image: "/image/art41.png",
+    description: "新しい世界への入り口",
+  },
+  {
+    id: 22,
+    title: "心の翼",
+    image: "/image/art42.png",
+    description: "自由への憧れと解放",
   },
 ]
 
@@ -134,7 +146,7 @@ export default function GalleryPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-center text-balance">心を癒すアートギャラリー</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-center text-balance">心を癒すアートギャラリー　その２</h1>
         </div>
       </header>
 

@@ -342,7 +342,7 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
                 type="checkbox"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="w-5 h-5 rounded border-2 border-white cursor-pointer"
+                className="w-8 h-8 rounded border-2 border-white cursor-pointer transition-all duration-300 hover:scale-125 hover:border-green-300 checked:scale-110 checked:bg-green-400"
               />
               <span className="text-white">同意する</span>
             </label>
@@ -891,6 +891,17 @@ const QuizPage = ({
                       fill
                       className="object-contain"
                       priority={currentQuiz === 0 && backgroundPatternIndex === 0}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                        const parent = target.parentElement
+                        if (parent && !parent.querySelector('.image-fallback')) {
+                          const fallback = document.createElement('div')
+                          fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+                          fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+                          parent.appendChild(fallback)
+                        }
+                      }}
                     />
                   </motion.div>
                 </AnimatePresence>
@@ -910,6 +921,17 @@ const QuizPage = ({
                     fill
                     className="object-contain object-left"
                     priority={currentQuiz === 0}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                      const parent = target.parentElement
+                      if (parent && !parent.querySelector('.image-fallback')) {
+                        const fallback = document.createElement('div')
+                        fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+                        fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+                        parent.appendChild(fallback)
+                      }
+                    }}
                   />
                 </motion.div>
               </div>
@@ -942,7 +964,7 @@ const QuizPage = ({
                 >
                   <Input
                     type="text"
-                    placeholder={`回答 ${currentAnswerIndex + 1} を入力してください`}
+                    placeholder="回答を入力してください"
                     value={userAnswers[currentAnswerIndex]}
                     onChange={(e) => handleTyping(currentAnswerIndex, e.target.value)}
                     className={`

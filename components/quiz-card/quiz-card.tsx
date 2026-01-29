@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Clock, Star, Tag } from "lucide-react"
 import Image from "next/image"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { homeTranslations, type HomeTranslationKey } from "@/locales/home-translations"
 
 interface Quiz {
   id: number
@@ -26,6 +28,8 @@ interface QuizCardProps {
 }
 
 export function QuizCard({ quiz }: QuizCardProps) {
+  const { language } = useLanguage()
+  const t = (key: HomeTranslationKey) => homeTranslations[language][key]
   const [isLoading, setIsLoading] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const router = useRouter()
@@ -68,7 +72,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
             </div>
             <div>
               <h3 className="font-semibold text-forest-700 mb-2">{quiz.title}</h3>
-              <p className="text-sm text-forest-600 mb-4">ゲームを読み込み中...</p>
+              <p className="text-sm text-forest-600 mb-4">{t("quiz_card_loading")}</p>
               <Progress value={loadingProgress} className="w-full mb-2" />
               <p className="text-xs text-forest-500">{Math.round(loadingProgress)}%</p>
             </div>
@@ -89,7 +93,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
           <div className="absolute top-2 right-2">
             <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
               <Star className="w-3 h-3 mr-1" />
-              注目
+              {t("quiz_card_new")}
             </Badge>
           </div>
         )}

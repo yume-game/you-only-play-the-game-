@@ -45,15 +45,15 @@ const TransitionCanvas: React.FC<TransitionCanvasProps> = ({
     const centerX = canvas.width / 2
     const centerY = canvas.height / 2
 
-    // 放射状の光線
-    for (let i = 0; i < 8; i++) {
+    // 放射状の光線を大幅に増やす
+    for (let i = 0; i < 24; i++) {
       rays.push({
         x: centerX,
         y: centerY,
         length: 0,
-        maxLength: Math.min(canvas.width, canvas.height) * 0.6,
-        angle: (i * 45) * (Math.PI / 180),
-        opacity: 0.6,
+        maxLength: Math.min(canvas.width, canvas.height) * 0.8, // より長く
+        angle: (i * 15) * (Math.PI / 180),
+        opacity: 0.8, // より明るく
         life: 0,
         maxLife: duration / 16.67
       })
@@ -70,14 +70,14 @@ const TransitionCanvas: React.FC<TransitionCanvasProps> = ({
     const centerX = canvas.width / 2
     const centerY = canvas.height / 2
 
-    // 拡張する光の輪
-    for (let i = 0; i < 3; i++) {
+    // 拡張する光の輪を増やす
+    for (let i = 0; i < 6; i++) {
       circles.push({
         x: centerX,
         y: centerY,
         radius: 0,
-        maxRadius: 150 + i * 50,
-        opacity: 0.4,
+        maxRadius: 200 + i * 80, // より大きく
+        opacity: 0.6, // より明るく
         life: 0,
         maxLife: (duration * 0.8) / 16.67
       })
@@ -94,7 +94,7 @@ const TransitionCanvas: React.FC<TransitionCanvasProps> = ({
 
       // 光線が中心から外に伸びる
       ray.length = ray.maxLength * progress
-      ray.opacity = Math.max(0, 0.6 * (1 - progress))
+      ray.opacity = Math.max(0, 0.8 * (1 - progress))
 
       return ray.life < ray.maxLife
     })
@@ -108,7 +108,7 @@ const TransitionCanvas: React.FC<TransitionCanvasProps> = ({
 
       // 輪が拡大
       circle.radius = circle.maxRadius * progress
-      circle.opacity = Math.max(0, 0.4 * (1 - progress))
+      circle.opacity = Math.max(0, 0.6 * (1 - progress))
 
       return circle.life < circle.maxLife
     })
@@ -122,14 +122,16 @@ const TransitionCanvas: React.FC<TransitionCanvasProps> = ({
       ctx.translate(ray.x, ray.y)
       ctx.rotate(ray.angle)
 
-      // グラデーション作成
+      // グラデーション作成（より鮮やか）
       const gradient = ctx.createLinearGradient(0, 0, ray.length, 0)
-      gradient.addColorStop(0, '#ffffff')
-      gradient.addColorStop(0.7, '#f3f4f6')
+      gradient.addColorStop(0, '#ffdd00')
+      gradient.addColorStop(0.5, '#f3f4f6')
       gradient.addColorStop(1, 'transparent')
 
       ctx.fillStyle = gradient
-      ctx.fillRect(0, -2, ray.length, 4)
+      ctx.shadowColor = '#ffffff'
+      ctx.shadowBlur = 20 // より強い光
+      ctx.fillRect(0, -3, ray.length, 6) // より太く
 
       ctx.restore()
     })
@@ -140,7 +142,9 @@ const TransitionCanvas: React.FC<TransitionCanvasProps> = ({
       ctx.save()
       ctx.globalAlpha = circle.opacity
       ctx.strokeStyle = '#ffffff'
-      ctx.lineWidth = 3
+      ctx.lineWidth = 5 // より太く
+      ctx.shadowColor = '#ffffff'
+      ctx.shadowBlur = 15
 
       ctx.beginPath()
       ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2)

@@ -38,7 +38,7 @@ interface DarkAnimationCanvasProps {
   duration?: number
 }
 
-const DARK_COLORS = ["#374151", "#4B5563", "#6B7280", "#9CA3AF", "#1F2937", "#111827"]
+const DARK_COLORS = ["#374151", "#4B5563", "#6B7280", "#9CA3AF", "#1F2937", "#111827", "#DC2626", "#B91C1C"]
 
 const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
   isActive,
@@ -59,16 +59,17 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
     const centerX = canvas.width / 2
     const centerY = canvas.height / 2
 
-    for (let i = 0; i < 8; i++) {
-      const angle = (i * 90 * Math.PI) / 180
+    // パーティクル数を大幅に増やす
+    for (let i = 0; i < 20; i++) {
+      const angle = (i * 18 * Math.PI) / 180
 
       particles.push({
         x: centerX,
         y: centerY,
-        vx: Math.cos(angle) * 2,
-        vy: Math.sin(angle) * 2,
-        size: 8 + Math.random() * 8,
-        opacity: 0.8,
+        vx: Math.cos(angle) * 5, // より速く
+        vy: Math.sin(angle) * 5,
+        size: 12 + Math.random() * 12, // より大きく
+        opacity: 0.9,
         life: 0,
         maxLife: duration / 16.67,
         color: DARK_COLORS[Math.floor(Math.random() * DARK_COLORS.length)]
@@ -86,13 +87,14 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
     const centerX = canvas.width / 2
     const centerY = canvas.height / 2
 
-    for (let i = 0; i < 3; i++) {
+    // 波紋を増やして大きく
+    for (let i = 0; i < 5; i++) {
       ripples.push({
         x: centerX,
         y: centerY,
         radius: 0,
-        maxRadius: 200 + i * 100,
-        opacity: 0.6,
+        maxRadius: 300 + i * 150, // より大きな波紋
+        opacity: 0.7,
         life: 0,
         maxLife: (duration * 0.75) / 16.67
       })
@@ -104,12 +106,13 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
   const createDarkRays = () => {
     const rays: DarkRay[] = []
 
-    for (let i = 0; i < 8; i++) {
+    // 光線を増やす
+    for (let i = 0; i < 16; i++) {
       rays.push({
-        angle: i * 45,
+        angle: i * 22.5,
         length: 0,
-        maxLength: 150,
-        opacity: 0.5,
+        maxLength: 250, // より長く
+        opacity: 0.6,
         life: 0,
         maxLife: (duration * 0.5) / 16.67
       })
@@ -125,11 +128,11 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
       particle.life++
 
       // 減速効果
-      particle.vx *= 0.98
-      particle.vy *= 0.98
+      particle.vx *= 0.97
+      particle.vy *= 0.97
 
       // フェードアウト
-      particle.opacity = Math.max(0, 0.8 * (1 - particle.life / particle.maxLife))
+      particle.opacity = Math.max(0, 0.9 * (1 - particle.life / particle.maxLife))
 
       return particle.life < particle.maxLife
     })
@@ -144,7 +147,7 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
       ripple.radius = ripple.maxRadius * progress
 
       // フェードアウト
-      ripple.opacity = Math.max(0, 0.6 * (1 - progress))
+      ripple.opacity = Math.max(0, 0.7 * (1 - progress))
 
       return ripple.life < ripple.maxLife
     })
@@ -159,7 +162,7 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
       ray.length = ray.maxLength * progress
 
       // フェードアウト
-      ray.opacity = Math.max(0, 0.5 * (1 - progress))
+      ray.opacity = Math.max(0, 0.6 * (1 - progress))
 
       return ray.life < ray.maxLife
     })
@@ -167,7 +170,7 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
 
   const updateOverlay = () => {
     const progress = Math.min(1, (particlesRef.current[0]?.life || 0) / (duration / 16.67))
-    overlayOpacityRef.current = Math.max(0, 0.3 * Math.sin(progress * Math.PI))
+    overlayOpacityRef.current = Math.max(0, 0.4 * Math.sin(progress * Math.PI)) // より強い暗転
   }
 
   const drawDarkParticles = (ctx: CanvasRenderingContext2D, particles: DarkParticle[]) => {
@@ -176,16 +179,18 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
       ctx.globalAlpha = particle.opacity
       ctx.fillStyle = particle.color
 
-      // 不規則な形状で重苦しさを演出
+      // 不規則な形状で重苦しさを演出 + 影
+      ctx.shadowColor = '#000000'
+      ctx.shadowBlur = 15
       ctx.beginPath()
       ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
       ctx.fill()
 
       // 内側に暗い影
-      ctx.globalAlpha = particle.opacity * 0.5
+      ctx.globalAlpha = particle.opacity * 0.6
       ctx.fillStyle = '#000000'
       ctx.beginPath()
-      ctx.arc(particle.x, particle.y, particle.size * 0.5, 0, Math.PI * 2)
+      ctx.arc(particle.x, particle.y, particle.size * 0.6, 0, Math.PI * 2)
       ctx.fill()
 
       ctx.restore()
@@ -196,8 +201,8 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
     ripples.forEach(ripple => {
       ctx.save()
       ctx.globalAlpha = ripple.opacity
-      ctx.strokeStyle = '#374151'
-      ctx.lineWidth = 3
+      ctx.strokeStyle = '#DC2626'
+      ctx.lineWidth = 5 // より太い線
 
       ctx.beginPath()
       ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2)
@@ -223,12 +228,12 @@ const DarkAnimationCanvas: React.FC<DarkAnimationCanvasProps> = ({
 
       // グラデーション作成
       const gradient = ctx.createLinearGradient(0, 0, 0, ray.length)
-      gradient.addColorStop(0, '#4B5563')
+      gradient.addColorStop(0, '#DC2626')
       gradient.addColorStop(0.5, '#6B7280')
       gradient.addColorStop(1, 'transparent')
 
       ctx.fillStyle = gradient
-      ctx.fillRect(-2, 0, 4, ray.length)
+      ctx.fillRect(-3, 0, 6, ray.length) // より太く
 
       ctx.restore()
     })

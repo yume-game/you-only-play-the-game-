@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Read(//c/Users/yoshi/Downloads/**)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(mkdir:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

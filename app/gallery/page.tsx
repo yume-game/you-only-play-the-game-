@@ -66,60 +66,54 @@ const artworks = [
   },
   {
     id: 11,
-    title: "春の目覚め",
-    image: "/image/art11.png",
-    description: "新しい始まりを告げる桜の花",
-  },
-  {
-    id: 12,
     title: "心の橋",
     image: "/image/art12.png",
     description: "過去と未来をつなぐ架け橋",
   },
   {
-    id: 13,
+    id: 12,
     title: "静寂の雪",
     image: "/image/art13.png",
     description: "全てを包み込む優しい静けさ",
   },
   {
-    id: 14,
+    id: 13,
     title: "朝露の輝き",
     image: "/image/art14.png",
     description: "小さな奇跡に満ちた朝",
   },
   {
-    id: 15,
+    id: 14,
     title: "風の歌",
     image: "/image/art15.png",
     description: "自然が奏でる癒しのメロディー",
   },
   {
-    id: 16,
+    id: 15,
     title: "月の静けさ",
     image: "/image/art16.png",
     description: "夜の静寂がもたらす安らぎ",
   },
   {
-    id: 17,
+    id: 16,
     title: "虹の希望",
     image: "/image/art17.png",
     description: "試練の後に現れる美しい約束",
   },
   {
-    id: 18,
+    id: 17,
     title: "秋の調べ",
     image: "/image/art18.png",
     description: "変化の美しさを受け入れる心",
   },
   {
-    id: 19,
+    id: 18,
     title: "心の灯火",
     image: "/image/art19.png",
     description: "小さな光が照らす希望の道",
   },
   {
-    id: 20,
+    id: 19,
     title: "永遠の今",
     image: "/image/art20.png",
     description: "この瞬間に存在する全ての美しさ",
@@ -150,7 +144,7 @@ export default function GalleryPage() {
 
         {/* Gallery Grid */}
         <div className="space-y-24">
-          {artworks.map((artwork) => (
+          {artworks.map((artwork, index) => (
             <div key={artwork.id}>
               {/* Artwork Card */}
               <div className="max-w-4xl mx-auto">
@@ -162,6 +156,35 @@ export default function GalleryPage() {
                   />
                 </div>
               </div>
+
+              {/* アフィリエイト広告を4枚ごとに挿入 */}
+              {(index + 1) % 4 === 0 && (
+                <div className="max-w-3xl mx-auto mt-24 mb-24">
+                  <div
+                    className="flex justify-center"
+                    style={{
+                      width: "100%",
+                      maxWidth: "600px",
+                      margin: "0 auto"
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        index === 3 ? `<a href="https://px.a8.net/svt/ejp?a8mat=45G2TO+7O95GY+2PEO+OPPBL" rel="nofollow">
+<img border="0" width="200" height="200" alt="" src="https://www23.a8.net/svt/bgt?aid=251012940464&wid=001&eno=01&mid=s00000012624004151000&mc=1"></a>
+<img border="0" width="1" height="1" src="https://www17.a8.net/0.gif?a8mat=45G2TO+7O95GY+2PEO+OPPBL" alt="">` :
+                        index === 7 ? `<a href="https://px.a8.net/svt/ejp?a8mat=45G2TO+7O95GY+2PEO+OOMQP" rel="nofollow">
+<img border="0" width="300" height="250" alt="" src="https://www20.a8.net/svt/bgt?aid=251012940464&wid=001&eno=01&mid=s00000012624004146000&mc=1"></a>
+<img border="0" width="1" height="1" src="https://www13.a8.net/0.gif?a8mat=45G2TO+7O95GY+2PEO+OOMQP" alt="">` :
+                        index === 11 ? `<a href="https://px.a8.net/svt/ejp?a8mat=45G2TO+7L9ZG2+4QYG+674EP" rel="nofollow">
+<img border="0" width="750" height="360" alt="" src="https://www25.a8.net/svt/bgt?aid=251012940459&wid=001&eno=01&mid=s00000022156001041000&mc=1"></a>
+<img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=45G2TO+7L9ZG2+4QYG+674EP" alt="">` :
+                        index === 15 ? `<a href="https://px.a8.net/svt/ejp?a8mat=45167E+679KMQ+5OI8+5ZEMP" rel="nofollow">
+<img border="0" width="300" height="250" alt="" src="https://www20.a8.net/svt/bgt?aid=250317482375&wid=001&eno=01&mid=s00000026504001005000&mc=1"></a>
+<img border="0" width="1" height="1" src="https://www14.a8.net/0.gif?a8mat=45167E+679KMQ+5OI8+5ZEMP" alt="">` : ""
+                    }}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>

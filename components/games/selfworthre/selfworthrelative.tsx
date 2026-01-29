@@ -55,140 +55,140 @@ type ActionPlan = {
 
 const quizzes: Quiz[] = [
   {
-    question: "今あなたの欲しい物やことは何ですか？",
+    question: "あなたが望む結果がすべて手に入ったとしたらどんな風にほかのひととかかわっているでしょうか。",
     画像: {
       PC: ["/image/worthho1 (2).png"],
       スマホ: ["/image/worth1"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "死を迎えるときパートナーにどんな人だったと語ってほしいですか？",
     画像: {
       PC: ["/image/worthho2.png"],
       スマホ: ["/image/worth52"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "あなたと関わったことによってどんな気持ちを相手に与えたいですか？",
     画像: {
       PC: ["/image/worthho3.png"],
       スマホ: ["/image/worth31"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "今まで、どんな自分でいたときに自分らしいと思いましたか？",
     画像: {
       PC: ["/image/worthho4.png"],
       スマホ: ["/image/worth41"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "居酒屋にいるときに、あなたのことをどんな風に思いながら話してほしいですか？",
     画像: {
       PC: ["/image/worthho5.png"],
       スマホ: ["/image/worth51"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "確かに成功できるかもしれないけど、やって嫌だなと思うことは何ですか？",
     画像: {
       PC: ["/image/worthho6.png"],
       スマホ: ["/image/worth6"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "成功に近づく知識の中で自分らしいや好きだなと思えることは何ですか？",
     画像: {
       PC: ["/image/worthho7.png"],
       スマホ: ["/image/worth7"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "相手とどんな関わり方を相手としたら自分を好きになりますか？",
     画像: {
       PC: ["/image/worthho8.png"],
       スマホ: ["/image/worth8"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "あなたが幼少期から好きなものはなんですか？",
     画像: {
       PC: ["/image/worthho9.png"],
       スマホ: ["/image/worth9"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "今までの人生で自分のことが嫌いになる瞬間はどんなときでしたか？",
     画像: {
       PC: ["/image/worthho10.png"],
       スマホ: ["/image/worth10"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "あなたの良いところのどこを相手に見せたいと思いますか？",
     画像: {
       PC: ["/image/worthho11.png"],
       スマホ: ["/image/worth11"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "お金がもらえなくてもやり続けられることは何ですか？",
     画像: {
       PC: ["/image/worthho12.png"],
       スマホ: ["/image/worth12"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "もし経済的に安定していたら、欲しいものがすべて手に入っていたら自分の時間を何に使いますか？",
     画像: {
       PC: ["/image/worthho13.png"],
       スマホ: ["/image/worth13"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "他人に合わせて手に入れたけど、自分らしくないと思ったものは何ですか？",
     画像: {
       PC: ["/image/worthho14.png"],
       スマホ: ["/image/worth14"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "あなたにとって自然なスキルや才能は何ですか？",
     画像: {
       PC: ["/image/worthho15.png"],
       スマホ: ["/image/worth15"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "あなたはなにに美しさを感じますか？",
     画像: {
       PC: ["/image/worthho16.png"],
       スマホ: ["/image/worth16"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "あなたにとって「愛」とはどういうことですか？",
     画像: {
       PC: ["/image/worthho17.png"],
       スマホ: ["/image/worth17"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "あなたにとって「平穏を見つける」とはどういうことですか？",
     画像: {
       PC: ["/image/worthho18.png"],
       スマホ: ["/image/worth18"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "あなたにとって「注目される」どういうことですか？",
     画像: {
       PC: ["/image/worthho19.png"],
       スマホ: ["/image/worth19"],
     },
   },
   {
-    question: "動的に生成される質問",
+    question: "あなたにとって「信頼」とはどういうことですか？",
     画像: {
       PC: ["/image/worthho20.png"],
       スマホ: ["/image/worth20"],
@@ -414,11 +414,22 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
           fill
           className="object-cover object-top"
           priority
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.style.display = 'none'
+            const parent = target.parentElement
+            if (parent && !parent.querySelector('.image-fallback')) {
+              const fallback = document.createElement('div')
+              fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+              fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+              parent.appendChild(fallback)
+            }
+          }}
         />
       </div>
 
       <div className="relative z-10 text-center space-y-6 bg-green-700 bg-opacity-70 p-8 rounded-lg max-w-2xl">
-        <h1 className="text-4xl font-bold text-white">後悔しない人生により近づきます！</h1>
+        <h1 className="text-4xl font-bold text-white">比較しない自分へ変わる！</h1>
         <p className="text-lg text-white">
           あなたが心の奥深くで求めているものを見つけることを目指します。その通りの行動をすることであなたは幸福度が高い人生を送れます。
           1問30秒です。直感で答えてみましょう！ではいってらっしゃい！（※完全無料です。）
@@ -657,19 +668,8 @@ const QuizPage = ({
     }
   }, [animationTimer])
 
-  const generateQuestionText = (currentQuiz: number, allUserAnswers: string[][]) => {
-    if (currentQuiz === 0) {
-      return "あなたの欲しい物やことは何ですか？"
-    }
-
-    const previousAnswers = allUserAnswers[currentQuiz - 1] || []
-    if (previousAnswers.length > 0) {
-      const answersText = previousAnswers.join("、")
-      return `どうして「${answersText}」が欲しいのですか？`
-    }
-
-    return "どうして「前の問題の回答」が欲しいのですか？"
-  }
+  // 質問テキストを直接取得
+  const currentQuestion = quizzes[currentQuiz]?.question || ""
 
   const handleSubmitLocal = () => {
     // 回答が空の場合はアニメーションを表示しない
@@ -728,6 +728,17 @@ const QuizPage = ({
             fill
             className="object-cover object-top"
             priority
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+              const parent = target.parentElement
+              if (parent && !parent.querySelector('.image-fallback')) {
+                const fallback = document.createElement('div')
+                fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+                fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+                parent.appendChild(fallback)
+              }
+            }}
           />
         )}
 
@@ -739,6 +750,17 @@ const QuizPage = ({
             fill
             className="object-cover object-top"
             priority
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+              const parent = target.parentElement
+              if (parent && !parent.querySelector('.image-fallback')) {
+                const fallback = document.createElement('div')
+                fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+                fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+                parent.appendChild(fallback)
+              }
+            }}
           />
 
           {/* Canvas背景切り替えエフェクト */}
@@ -753,6 +775,17 @@ const QuizPage = ({
                 fill
                 className="object-cover object-top"
                 priority
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  const parent = target.parentElement
+                  if (parent && !parent.querySelector('.image-fallback')) {
+                    const fallback = document.createElement('div')
+                    fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+                    fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+                    parent.appendChild(fallback)
+                  }
+                }}
               />
             </div>
           )}
@@ -776,7 +809,7 @@ const QuizPage = ({
         <div className="relative z-10 flex flex-col h-full p-6">
           {/* 既存のコンテンツをここに配置 */}
           {/* 上部情報 */}
-          <div className="bg-white bg-opacity-90 rounded-b-lg p-4 md:relative md:top-0 fixed top-0 left-0 right-0 z-20">
+          <div className="bg-white bg-opacity-90 rounded-lg p-4 md:relative md:top-0 fixed top-0 left-0 right-0 z-20">
             {/* デスクトップレイアウト */}
             <div className="hidden md:flex flex-row justify-between items-center gap-2">
               <div className="text-green-600 text-sm font-medium">
@@ -809,7 +842,7 @@ const QuizPage = ({
           <div className="bg-white bg-opacity-90 rounded-lg p-8 mb-4 mt-32 md:mt-0">
             <div className="flex items-center justify-center gap-3">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 text-center leading-tight">
-                {generateQuestionText(currentQuiz, allUserAnswers)}
+                {currentQuestion}
               </h2>
               {/* デスクトップのみヘルプボタンを表示 */}
               <button
@@ -818,6 +851,29 @@ const QuizPage = ({
               >
                 ヘルプ
               </button>
+            </div>
+            {/* 回答例 */}
+            <div className="mt-4 text-gray-500 text-sm md:text-base text-center">
+              {currentQuiz === 0 && "例：笑顔で接している、優しく話している、相手の話をよく聞いている"}
+              {currentQuiz === 1 && "例：優しい人、強い人、誠実な人、楽しい人"}
+              {currentQuiz === 2 && "例：安心感、温かさ、楽しさ、元気"}
+              {currentQuiz === 3 && "例：誰かを助けているとき、好きなことに没頭しているとき、自分の意見を伝えたとき"}
+              {currentQuiz === 4 && "例：面白い人、信頼できる人、一緒にいて楽な人"}
+              {currentQuiz === 5 && "例：嘘をつくこと、人を傷つけること、自分を偽ること"}
+              {currentQuiz === 6 && "例：人の話を聞くこと、新しいことを学ぶこと、問題を解決すること"}
+              {currentQuiz === 7 && "例：相手を尊重する、正直に話す、相手の気持ちを考える"}
+              {currentQuiz === 8 && "例：絵を描くこと、音楽、スポーツ、読書"}
+              {currentQuiz === 9 && "例：嘘をついたとき、人を傷つけたとき、自分に正直でなかったとき"}
+              {currentQuiz === 10 && "例：優しさ、誠実さ、強さ、明るさ"}
+              {currentQuiz === 11 && "例：人を助けること、創作活動、学ぶこと、運動"}
+              {currentQuiz === 12 && "例：家族と過ごす、趣味に没頭する、旅行する、学び続ける"}
+              {currentQuiz === 13 && "例：周りに合わせた仕事、見栄のための買い物、無理な人間関係"}
+              {currentQuiz === 14 && "例：人の話を聞くこと、共感する力、問題解決力、創造力"}
+              {currentQuiz === 15 && "例：自然、人の優しさ、芸術作品、誠実な行動"}
+              {currentQuiz === 16 && "例：相手を大切にすること、無条件に受け入れること、支え合うこと"}
+              {currentQuiz === 17 && "例：自分を受け入れること、心が落ち着くこと、ありのままでいられること"}
+              {currentQuiz === 18 && "例：自分の価値を認められること、人の役に立つこと、自分らしさを表現すること"}
+              {currentQuiz === 19 && "例：約束を守ること、正直であること、相手を裏切らないこと"}
             </div>
           </div>
 
@@ -837,7 +893,7 @@ const QuizPage = ({
                     )}
                     <Input
                       type="text"
-                      placeholder={`回答 ${index + 1}`}
+                      placeholder="回答"
                       value={answer}
                       onChange={(e) => updateAnswer(index, e.target.value)}
                       className={`w-full bg-white bg-opacity-90 text-gray-800 placeholder-gray-500 transition-all duration-300 ${
@@ -1013,6 +1069,9 @@ const QuizPage = ({
                 ) : (
                   <>
                     <p>
+                      他人から影響受けたものをできるだけ除くように書いてください。
+                    </p>
+                    <p>
                       「回答する」ボタンをあなたが求めているものの深い目的が探し出せるまで押してください。
                     </p>
                     <p>
@@ -1163,6 +1222,17 @@ const ResultPage = ({
           fill
           className="object-cover object-top"
           priority
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.style.display = 'none'
+            const parent = target.parentElement
+            if (parent && !parent.querySelector('.image-fallback')) {
+              const fallback = document.createElement('div')
+              fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+              fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+              parent.appendChild(fallback)
+            }
+          }}
         />
       </div>
 
@@ -1293,6 +1363,17 @@ const SummaryPage = ({
           fill
           className="object-cover object-top"
           priority
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.style.display = 'none'
+            const parent = target.parentElement
+            if (parent && !parent.querySelector('.image-fallback')) {
+              const fallback = document.createElement('div')
+              fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+              fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+              parent.appendChild(fallback)
+            }
+          }}
         />
       </div>
 
@@ -1430,7 +1511,7 @@ const ActionPlanPage = ({
           }, 1000)
 
           setTimeout(() => {
-            setTimeLeft(getInitialTime())
+            setTimeLeft(40)
           }, 100)
 
           return 0
@@ -1442,14 +1523,6 @@ const ActionPlanPage = ({
     return () => clearInterval(timer)
   }, [onTimeUp])
 
-  useEffect(() => {
-    return () => {
-      if (animationTimer) {
-        clearTimeout(animationTimer)
-      }
-    }
-  }, [animationTimer])
-
   const handleInputChange = (field: keyof ActionPlan, value: string) => {
     const previousValue = currentPlan[field] || ""
     setCurrentPlan((prev) => ({ ...prev, [field]: value }))
@@ -1459,12 +1532,18 @@ const ActionPlanPage = ({
       const animationKey = `field-${field}`
       setFieldAnimations((prev) => ({ ...prev, [animationKey]: true }))
 
+      // 既存のタイマーをクリア
       if (animationTimer) {
         clearTimeout(animationTimer)
       }
 
+      // 新しいタイマーを設定
       const newTimer = setTimeout(() => {
-        setFieldAnimations({})
+        setFieldAnimations((prev) => {
+          const newAnimations = { ...prev }
+          delete newAnimations[animationKey]
+          return newAnimations
+        })
       }, 1000)
       setAnimationTimer(newTimer)
     }
@@ -1474,9 +1553,8 @@ const ActionPlanPage = ({
     if (currentPlan.when.trim() || currentPlan.action.trim() || currentPlan.motivation.trim()) {
       onActionPlanAdd(currentPlan.when, currentPlan.action, currentPlan.motivation)
       setCurrentPlan({ when: "", action: "", motivation: "" })
-      setCompletedFields(new Set())
       setShowConfetti(true)
-      setTimeLeft(Math.max(10, 40 - ((actionPlans.length + 1) * 3)))
+      setTimeLeft(40) // タイマーリセット
       setTimeout(() => {
         setShowConfetti(false)
       }, 1000)
@@ -1484,7 +1562,6 @@ const ActionPlanPage = ({
   }
 
   const hasValidPlan = currentPlan.when.trim() !== "" || currentPlan.action.trim() !== "" || currentPlan.motivation.trim() !== ""
-  const isGoldenPlan = () => (actionPlans.length + 1) % 3 === 0
 
   return (
     <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in">
@@ -1495,6 +1572,17 @@ const ActionPlanPage = ({
           fill
           className="object-cover object-top"
           priority
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.style.display = 'none'
+            const parent = target.parentElement
+            if (parent && !parent.querySelector('.image-fallback')) {
+              const fallback = document.createElement('div')
+              fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
+              fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
+              parent.appendChild(fallback)
+            }
+          }}
         />
       </div>
 
@@ -1508,9 +1596,7 @@ const ActionPlanPage = ({
             ? 100
             : completedFields.has("action") && completedFields.size === 2
               ? 200
-              : isGoldenPlan()
-                ? 900
-                : 600
+              : 300
         }
       />
 
@@ -1521,11 +1607,11 @@ const ActionPlanPage = ({
         <div className="bg-white bg-opacity-95 rounded-xl p-8 shadow-2xl">
           {/* ヘッダー */}
           <div className="flex justify-between items-center mb-6">
-            <div className="text-green-600 text-lg font-bold">行動プラン作成</div>
-            <div className={`text-2xl font-extrabold ${getTimeColor(timeLeft, timeUpCount)}`}>
+            <div className="text-green-600 text-lg font-medium">行動プラン作成</div>
+            <div className={`text-2xl font-bold ${getTimeColor(timeLeft, timeUpCount)}`}>
               ⏱️残り時間: {timeLeft}秒
             </div>
-            <div className="text-green-600 text-3xl font-extrabold">🏆{totalPoints}pt</div>
+            <div className="text-green-600 text-3xl font-bold">🏆{totalPoints}pt</div>
           </div>
 
           <h1 className="text-3xl font-bold text-green-800 mb-2 text-center">行動プランを作成しましょう</h1>
@@ -1547,23 +1633,11 @@ const ActionPlanPage = ({
           </div>
 
           {/* 行動プラン入力フォーム */}
-          <div
-            className={`rounded-lg p-6 mb-6 ${
-              isGoldenPlan()
-                ? "bg-gradient-to-br from-yellow-50 via-yellow-100 to-amber-50 border-4 border-yellow-400 shadow-xl shadow-yellow-400/50 animate-pulse"
-                : "bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50 border-2 border-blue-200 shadow-lg"
-            } transition-all duration-500`}
-          >
-            <h2
-              className={`text-xl font-bold mb-4 ${
-                isGoldenPlan() ? "text-yellow-800" : "text-blue-800"
-              }`}
-            >
-              🎯 新しい行動プラン
-            </h2>
+          <div className="bg-blue-50 rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-bold text-blue-800 mb-4">🎯 新しい行動プラン</h2>
 
             <div className="space-y-4">
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-blue-700 mb-2">いつ？</label>
                 <div className="flex gap-2">
                   <div className={`relative transition-all duration-500 flex-1 ${fieldAnimations['field-when'] ? "bg-green-50 rounded-lg p-1" : ""}`}>
@@ -1577,33 +1651,27 @@ const ActionPlanPage = ({
                       placeholder="例：毎朝起きたとき、仕事が終わったら"
                       value={currentPlan.when}
                       onChange={(e) => handleInputChange("when", e.target.value)}
-                      className={`w-full ${fieldAnimations['field-when'] ? "border-green-400 shadow-lg" : ""}`}
+                      className={`w-full ${fieldAnimations["field-when"] ? "border-green-400 shadow-lg" : ""}`}
                     />
                   </div>
                   <Button
                     onClick={() => {
                       if (currentPlan.when.trim() && !completedFields.has("when")) {
-                        onFieldComplete()
+                        onFieldComplete() // 100pt
                         setCompletedFields((prev) => new Set(prev).add("when"))
                         setShowConfetti(true)
                         setTimeout(() => setShowConfetti(false), 1000)
                       }
                     }}
                     disabled={!currentPlan.when.trim() || completedFields.has("when")}
-                    className={`px-4 py-2 text-sm font-medium ${
-                      completedFields.has("when")
-                        ? "bg-green-500 text-white cursor-default"
-                        : !currentPlan.when.trim()
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-blue-500 text-white hover:bg-blue-600"
-                    }`}
+                    className="whitespace-nowrap"
                   >
                     {completedFields.has("when") ? "✓" : "回答する"}
                   </Button>
                 </div>
               </div>
 
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-blue-700 mb-2">どんな行動？</label>
                 <div className="flex gap-2">
                   <div className={`relative transition-all duration-500 flex-1 ${fieldAnimations['field-action'] ? "bg-green-50 rounded-lg p-1" : ""}`}>
@@ -1617,41 +1685,40 @@ const ActionPlanPage = ({
                       placeholder="例：5分間瞑想する、感謝の気持ちを書く"
                       value={currentPlan.action}
                       onChange={(e) => handleInputChange("action", e.target.value)}
-                      className={`w-full ${fieldAnimations['field-action'] ? "border-green-400 shadow-lg" : ""}`}
                       disabled={!completedFields.has("when")}
+                      className={`w-full ${fieldAnimations["field-action"] ? "border-green-400 shadow-lg" : ""}`}
                     />
                   </div>
                   <Button
                     onClick={() => {
                       if (currentPlan.action.trim() && !completedFields.has("action")) {
-                        setTotalPoints((prev) => prev + 200)
+                        setTotalPoints((prev) => prev + 200) // 2個目は200pt
                         setCompletedFields((prev) => new Set(prev).add("action"))
                         setShowConfetti(true)
                         setTimeout(() => setShowConfetti(false), 1000)
                       }
                     }}
                     disabled={!currentPlan.action.trim() || completedFields.has("action") || !completedFields.has("when")}
-                    className={`px-4 py-2 text-sm font-medium ${
-                      completedFields.has("action")
-                        ? "bg-green-500 text-white cursor-default"
-                        : !currentPlan.action.trim() || !completedFields.has("when")
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-blue-500 text-white hover:bg-blue-600"
-                    }`}
+                    className="whitespace-nowrap"
                   >
                     {completedFields.has("action") ? "✓" : "回答する"}
                   </Button>
                 </div>
               </div>
 
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-blue-700 mb-2">その行動をしたくないときに、自分になんと声をかける？</label>
+                {fieldAnimations["plan-motivation"] && (
+                  <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-green-500 text-xl z-10 animate-bounce">
+                    🌿
+                  </span>
+                )}
                 <Input
                   type="text"
                   placeholder="例：これをやった方がもっと成長できるよ"
                   value={currentPlan.motivation}
                   onChange={(e) => handleInputChange("motivation", e.target.value)}
-                  className="w-full"
+                  className={`w-full ${fieldAnimations["plan-motivation"] ? "border-green-400 shadow-lg" : ""}`}
                 />
               </div>
             </div>
@@ -1660,18 +1727,14 @@ const ActionPlanPage = ({
               onClick={handleAdd}
               disabled={!hasValidPlan}
               className={`w-full mt-6 py-4 text-base font-bold ${
-                !hasValidPlan
-                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : isGoldenPlan()
-                    ? "bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 text-white animate-pulse hover:animate-none shadow-xl shadow-yellow-500/50 border-2 border-yellow-300 hover:border-yellow-100 transform hover:scale-105"
-                    : "bg-gradient-to-r from-green-500 via-green-600 to-green-700 hover:from-green-600 hover:via-green-700 hover:to-green-800 text-white animate-pulse hover:animate-none shadow-xl shadow-green-500/50 border-2 border-green-400 hover:border-green-200 transform hover:scale-105"
-              } transition-all duration-300 rounded-xl`}
+                hasValidPlan
+                  ? "bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white animate-pulse hover:animate-none shadow-2xl border-4 border-green-400 hover:border-green-200"
+                  : "bg-gray-400 text-gray-200 cursor-not-allowed"
+              }`}
             >
               <span className="flex items-center justify-center gap-2">
                 <span>追加する</span>
-                <span className="text-sm">
-                  {isGoldenPlan() ? "+900pt 🏆" : "+600pt"}
-                </span>
+                <span className="text-sm">+300pt</span>
               </span>
             </Button>
           </div>
@@ -1679,9 +1742,9 @@ const ActionPlanPage = ({
           {/* 完了ボタン */}
           <Button
             onClick={onComplete}
-            className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white py-8 text-2xl font-extrabold mb-4 shadow-2xl shadow-purple-500/50 transform hover:scale-105 transition-all duration-300"
+            className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white py-6 text-2xl font-bold mb-6 shadow-2xl"
           >
-            行動プランを書き終えた（次のステージへ）
+            行動プラン作成を終了する
           </Button>
 
           {/* 作成済みの行動プラン */}
@@ -1802,16 +1865,9 @@ const QuizGame = () => {
     setGameState("action")
   }
 
-  // フィールド完了時に100pt追加
-  const handleFieldComplete = () => {
-    setTotalPoints((prev) => prev + 100)
-  }
-
-  // 行動プランの追加ハンドラー（3回に1回は900pt、それ以外は600pt）
+  // 行動プランの追加ハンドラー
   const handleActionPlanAdd = (when: string, action: string, motivation: string) => {
     setActionPlans((prev) => [...prev, { when, action, motivation }])
-    const isGolden = (actionPlans.length + 1) % 3 === 0
-    setTotalPoints((prev) => prev + (isGolden ? 900 : 600))
   }
 
   // 行動プランから最終ページへ
@@ -1873,7 +1929,7 @@ const QuizGame = () => {
           onComplete={handleActionComplete}
           onTimeUp={handleTimeUp}
           onExit={handleDirectToAffiliate}
-          onFieldComplete={handleFieldComplete}
+          onFieldComplete={() => setTotalPoints((prev) => prev + 100)}
         />
       )}
       {gameState === "result" && (

@@ -2,8 +2,12 @@
 
 import { useState } from "react"
 import { Slider } from "@/components/ui/slider"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { homeTranslations, type HomeTranslationKey } from "@/locales/home-translations"
 
 export function PainMeter() {
+  const { language } = useLanguage()
+  const t = (key: HomeTranslationKey) => homeTranslations[language][key]
   const [painLevel, setPainLevel] = useState(5)
 
   const handleSliderChange = (value: number[]) => {
@@ -15,12 +19,12 @@ export function PainMeter() {
 
   return (
     <div className="w-full max-w-md mx-auto p-6 bg-green-50 rounded-3xl shadow-md border border-green-200">
-      <h1 className="text-2xl font-bold text-center mb-6 text-green-800">苦しさメーター</h1>
+      <h1 className="text-2xl font-bold text-center mb-6 text-green-800">{t("pain_meter_title")}</h1>
 
       <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-8">
         {/* 温度計 */}
         <div className="relative w-24 h-64 flex flex-col items-center">
-          <div className="text-lg font-semibold mb-2 text-green-700">温度計</div>
+          <div className="text-lg font-semibold mb-2 text-green-700">{t("pain_meter_thermometer")}</div>
           <div className="relative w-16 h-48">
             <div className="absolute inset-0 bg-green-100 rounded-full rounded-t-none overflow-hidden border-2 border-green-400">
               <div
@@ -66,7 +70,7 @@ export function PainMeter() {
 
         {/* スコアバー */}
         <div className="w-full md:w-64 flex flex-col items-center">
-          <div className="text-lg font-semibold mb-2 text-green-700">現在の苦しさのレベル</div>
+          <div className="text-lg font-semibold mb-2 text-green-700">{t("pain_meter_current_level")}</div>
           <div className="w-full h-12 flex items-center justify-center text-3xl font-bold mb-4 text-green-800">
             {painLevel.toFixed(1)}
           </div>
@@ -89,13 +93,17 @@ export function PainMeter() {
           </div>
           <div className="flex justify-between w-full mt-4 text-sm">
             <div className="text-center">
-              <span className="block font-medium text-green-700">苦しくない</span>
+              <span className="block font-medium text-green-700">{t("pain_meter_not_painful")}</span>
             </div>
             <div className="text-center">
-              <span className="block font-medium text-green-700">非常に苦しい</span>
+              <span className="block font-medium text-green-700">{t("pain_meter_very_painful")}</span>
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="text-center mt-4">
+        <p className="text-sm text-green-700">{t("pain_meter_description")}</p>
       </div>
     </div>
   )

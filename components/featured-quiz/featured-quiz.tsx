@@ -5,13 +5,17 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link" // Linkコンポーネントをインポート
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { homeTranslations, type HomeTranslationKey } from "@/locales/home-translations"
 
 export function FeaturedQuiz() {
+  const { language } = useLanguage()
+  const t = (key: HomeTranslationKey) => homeTranslations[language][key]
   const [isLoading, setIsLoading] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const router = useRouter()
   // クイズページへのパスを定義
-  const quizPath = "/games/selfworth";
+  const quizPath = "/games/expose";
 
   const handleStartGame = () => {
     setIsLoading(true)
@@ -42,11 +46,11 @@ export function FeaturedQuiz() {
       <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 p-6 md:p-8">
         <div className="flex flex-col justify-center">
           <Badge variant="outline" className="w-fit mb-4 text-white border-white hover:bg-white/20">
-            今週のピックアップ
+            {t("featured_badge")}
           </Badge>
-          <h3 className="text-2xl md:text-3xl font-bold mb-2">幸せが何か発見するゲーム</h3>
+          <h3 className="text-2xl md:text-3xl font-bold mb-2">{t("featured_title")}</h3>
           <p className="text-white/80 mb-4">
-            情報過多になった現代で見失いがちな、本当に欲しい人生を発見し、行動を起こすことであなたの人生をよりよいものにします。
+            {t("featured_description")}
           </p>
           
           {/* <CHANGE> ロード状態に応じてボタンを変更 */}
@@ -55,7 +59,7 @@ export function FeaturedQuiz() {
               <div className="w-full">
                 <div className="bg-white/20 rounded-lg p-4 mb-2">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">ゲームを読み込み中...</span>
+                    <span className="text-sm font-medium">{t("featured_loading")}</span>
                     <span className="text-sm font-bold">{Math.round(loadingProgress)}%</span>
                   </div>
                   <div className="w-full bg-white/30 rounded-full h-3">
@@ -67,11 +71,11 @@ export function FeaturedQuiz() {
                 </div>
               </div>
             ) : (
-              <Button 
+              <Button
                 onClick={handleStartGame}
                 className="bg-white text-forest-600 hover:bg-white/90"
               >
-                今すぐプレイ
+                {t("featured_play_button")}
               </Button>
             )}
           </div>
@@ -83,8 +87,8 @@ export function FeaturedQuiz() {
             className={`relative w-full max-w-md aspect-[4/3] rounded-lg overflow-hidden group ${!isLoading ? 'cursor-pointer' : 'cursor-default'}`}
           >
             <Image
-              src="/image/worthtop.png"
-              alt="価値観発見ゲーム"
+              src="/image/yumedesigndreamtrue_the_volunteer_man_nostalgic_cinematic_atm_0d2f3e1d-6ee2-4378-b131-762e30c4edb6_0.png"
+              alt="不安を明確化することで、変に恐れなくなるゲーム"
               width={320} // 適切なサイズを指定
               height={180} // 適切なサイズを指定
               className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"

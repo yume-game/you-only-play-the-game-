@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 
 // Geistフォントの設定（現在のコード）
 const geistSans = Geist({
@@ -53,12 +54,12 @@ export default function RootLayout({
             </div>
           </div>
         ) : (
-          <>
+          <LanguageProvider>
             {children}
             {/* Analyticsコンポーネント */}
             <Analytics mode="production" />
             <SpeedInsights />
-          </>
+          </LanguageProvider>
         )}
       </body>
     </html>
