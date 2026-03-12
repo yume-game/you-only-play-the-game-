@@ -51,7 +51,7 @@ const COPYWRITING = [
 ]
 
 // スタートページコンポーネント
-const StartPage = ({ onStart }: { onStart: () => void }) => {
+const StartPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMuted: boolean; setIsMuted: (value: boolean) => void }) => {
   const router = useRouter()
 
   return (
@@ -68,6 +68,21 @@ const StartPage = ({ onStart }: { onStart: () => void }) => {
             <p className="text-xl md:text-2xl text-muted-foreground font-medium">
               落ちてくるにこちゃんをクリックしてポイントゲット！
             </p>
+          </div>
+
+          {/* 消音モードボタン */}
+          <div className="flex justify-center">
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${
+                isMuted
+                  ? "bg-gray-500 hover:bg-gray-600"
+                  : "bg-green-500 hover:bg-green-600"
+              } text-white font-medium`}
+            >
+              <span className="text-xl">{isMuted ? "🔇" : "🔊"}</span>
+              <span>{isMuted ? "消音モード中" : "消音モードを選択"}</span>
+            </button>
           </div>
 
           {/* 遊び方 */}
@@ -137,7 +152,7 @@ const StartPage = ({ onStart }: { onStart: () => void }) => {
 }
 
 // ゲームページコンポーネント
-const GamePage = ({ onGameEnd }: { onGameEnd: (score: number) => void }) => {
+const GamePage = ({ onGameEnd, playSoundEffect }: { onGameEnd: (score: number) => void; playSoundEffect: (soundPath: string) => void }) => {
   const router = useRouter()
   const [score, setScore] = useState(0)
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION)
@@ -298,7 +313,14 @@ const GamePage = ({ onGameEnd }: { onGameEnd: (score: number) => void }) => {
     }
 
     if (points !== 0) {
+      if (points > 0) {
+        playSoundEffect("/sound/100pt.mp3")
+      } else {
+        playSoundEffect("/sound/timeup.mp3")
+      }
       setScore((prev) => Math.max(0, prev + points))
+    } else if (item.type === "time") {
+      playSoundEffect("/sound/100pt.mp3")
     }
 
     addClickAnimation(x, y, text, color)
@@ -639,17 +661,55 @@ export default function ClickerGame() {
   const router = useRouter()
   const [gameState, setGameState] = useState<"start" | "game" | "result">("start")
   const [finalScore, setFinalScore] = useState(0)
+  const [isMuted, setIsMuted] = useState(false)
+  const bgmRef = useRef<HTMLAudioElement | null>(null)
+
+  // 効果音再生ヘルパー関数
+  const playSoundEffect = useCallback((soundPath: string) => {
+    if (!isMuted) {
+      const audio = new Audio(soundPath)
+      audio.volume = 0.5
+      audio.play().catch(console.error)
+    }
+  }, [isMuted])
+
+  // BGM再生管理
+  useEffect(() => {
+    const shouldPlayBgm = gameState === "game"
+
+    if (shouldPlayBgm && !isMuted) {
+      if (!bgmRef.current) {
+        bgmRef.current = new Audio("/sound/gamebgmchild.mp3")
+        bgmRef.current.loop = true
+        bgmRef.current.volume = 0.3
+      }
+      bgmRef.current.play().catch(console.error)
+    } else {
+      if (bgmRef.current) {
+        bgmRef.current.pause()
+      }
+    }
+
+    return () => {
+      if (bgmRef.current) {
+        bgmRef.current.pause()
+      }
+    }
+  }, [gameState, isMuted])
 
   const handleStart = () => {
+    playSoundEffect("/sound/gamestart.mp3")
     setGameState("game")
   }
 
   const handleGameEnd = (score: number) => {
+    playSoundEffect("/sound/gamefinish.mp3")
     setFinalScore(score)
     setGameState("result")
   }
 
   const handleRestart = () => {
+    playSoundEffect("/sound/replay.mp3")
     setFinalScore(0)
     setGameState("start")
   }
@@ -660,8 +720,8 @@ export default function ClickerGame() {
 
   return (
     <>
-      {gameState === "start" && <StartPage onStart={handleStart} />}
-      {gameState === "game" && <GamePage onGameEnd={handleGameEnd} />}
+      {gameState === "start" && <StartPage onStart={handleStart} isMuted={isMuted} setIsMuted={setIsMuted} />}
+      {gameState === "game" && <GamePage onGameEnd={handleGameEnd} playSoundEffect={playSoundEffect} />}
       {gameState === "result" && <ResultPage finalScore={finalScore} onRestart={handleRestart} onExit={handleExit} />}
     </>
   )

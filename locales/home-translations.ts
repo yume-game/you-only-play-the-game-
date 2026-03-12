@@ -41,7 +41,7 @@ export const homeTranslations = {
     game_selfworthrelative_tags_3: "不安",
 
     game_expose_title: "不安を明確化することで、変に恐れなくなるゲーム",
-    game_expose_description: "エクスポージャーと呼ばれる、不安について考えまくることで、不快感に慣れて小さくするという方法をゲーム化したものです",
+    game_expose_description: "話しかけたい人に話しかける、不安の解消、完璧主義解消、怖い人や批判への対策、過去の癒えない傷の回復など、あらゆる問題を解決するエクスポージャーをゲーム化したものです",
     game_expose_category: "不安",
     game_expose_tags_1: "不安",
     game_expose_tags_2: "エクスポージャー",
@@ -73,6 +73,13 @@ export const homeTranslations = {
     article_art2_description: "見るだけでアートは、ストレスホルモン（コルチゾール）の値を下げる効果が確認されています。",
     article_art2_category: "アート",
 
+    article_cat_title: "ぽっちゃりな猫を見るだけのサイト",
+    article_cat_description: "科学的根拠はあるかわかりませんが、私の私利私欲です。",
+    article_cat_category: "猫",
+    article_cat_tags_1: "猫",
+    article_cat_tags_2: "癒し",
+    article_cat_tags_3: "ぽっちゃり",
+
     // Difficulty & Duration
     difficulty_beginner: "初級",
     duration_3_10: "3-10分",
@@ -93,7 +100,7 @@ export const homeTranslations = {
     // FeaturedQuiz
     featured_badge: "今週のピックアップ",
     featured_title: "不安を明確化することで、変に恐れなくなるゲーム",
-    featured_description: "エクスポージャーと呼ばれる、不安について考えまくることで、不快感に慣れて小さくするという方法をゲーム化したものです",
+    featured_description: "話しかけたい人に話しかける、不安の解消、完璧主義解消、怖い人や批判への対策、過去の癒えない傷の回復など、あらゆる問題を解決するエクスポージャーをゲーム化したものです",
     featured_loading: "ゲームを読み込み中...",
     featured_play_button: "今すぐプレイ",
 
@@ -177,6 +184,13 @@ export const homeTranslations = {
     article_art2_title: "View-Only Art Effective for Anxiety Relief Part 2",
     article_art2_description: "Just viewing art has been confirmed to reduce stress hormone (cortisol) levels.",
     article_art2_category: "Art",
+
+    article_cat_title: "Just Watch Chubby Cats",
+    article_cat_description: "I don't know if there's scientific evidence, but this is my selfish desire.",
+    article_cat_category: "Cats",
+    article_cat_tags_1: "Cats",
+    article_cat_tags_2: "Healing",
+    article_cat_tags_3: "Chubby",
 
     // Difficulty & Duration
     difficulty_beginner: "Beginner",

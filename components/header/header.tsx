@@ -19,10 +19,10 @@ export function Header({ onPopularQuizzes }: HeaderProps) {
   };
 
   return (
-    <header className="bg-forest-200 border-b border-forest-300">
+    <header>
       <div className="container mx-auto py-4 px-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-forest-700">
-          {language === "ja" ? "yumeのメンタルゲーム" : "yume's Mental Games"}
+        <h1 className="text-2xl font-extrabold text-forest-700" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
+          {language === "ja" ? "ゆめのメンタルゲーム" : "yume's Mental Games"}
         </h1>
 
         {/* デスクトップナビゲーション */}

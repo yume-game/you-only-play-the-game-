@@ -299,7 +299,7 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
 }
 
 
-const IntroPage = ({ onStart }: { onStart: () => void }) => {
+const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMuted: boolean; setIsMuted: (value: boolean) => void }) => {
   const [isTermsOpen, setIsTermsOpen] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
@@ -327,6 +327,21 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
           このゲームではいくつかの質問に答えてもらうことで、あなたのメンタルの改善を図ります。　　　多くの質問に答えれるほど、メンタルヘルスの改善が見込めます。
           　　　　　　　　一問20秒です。ではいってらっしゃい！（※完全無料です。）
         </p>
+
+        {/* 消音モードボタン */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${
+              isMuted
+                ? "bg-gray-500 hover:bg-gray-600"
+                : "bg-green-500 hover:bg-green-600"
+            } text-white font-medium`}
+          >
+            <span className="text-xl">{isMuted ? "🔇" : "🔊"}</span>
+            <span>{isMuted ? "消音モード中" : "消音モードを選択"}</span>
+          </button>
+        </div>
 
         {/* 利用規約セクション */}
         <div className="space-y-4">
@@ -378,6 +393,7 @@ const QuizPage = ({
   onSubmit,
   onEndQuiz,
   onTimeUp,
+  playSoundEffect,
 }: {
   currentQuiz: number
   userAnswers: string[]
@@ -390,6 +406,7 @@ const QuizPage = ({
   onSubmit: () => void
   onEndQuiz: () => void
   onTimeUp: () => void
+  playSoundEffect: (soundPath: string) => void
 }) => {
   const currentAnswerIndex = userAnswers.length - 1
   const [timeLeft, setTimeLeft] = useState(getTimeLimit(currentAnswerIndex))
@@ -517,6 +534,9 @@ const QuizPage = ({
   }
 
   const handleTyping = (index: number, value: string) => {
+    if (value.trim() !== "" && userAnswers[index]?.trim() === "") {
+      playSoundEffect("/sound/typing.mp3")
+    }
     onUpdateAnswer(index, value)
     overlayControls.start({
       x: [overlayOffset, overlayOffset - 2, overlayOffset + 2, overlayOffset - 2, overlayOffset + 2, overlayOffset], // 左右に2ピクセルずつ振動
@@ -1221,7 +1241,7 @@ const ResultPage = ({
         
         if (responseId) {
           // 既存レコードを更新
-          supabase.from("pervasiveness_responses").update({
+          supabase.from("pervasiveness_responses_v2").update({
             affiliate_pattern_index: affiliatePatternIndex,
             affiliate_clicked: true,
             affiliate_click_type: clickData?.clickType || "unknown",
@@ -1245,7 +1265,7 @@ const ResultPage = ({
         } else {
           console.warn("quiz_response_idが見つかりません。アフィリエイト情報のみで新規レコードを作成します")
           // レスポンスIDがない場合は新規作成
-          supabase.from("pervasiveness_responses").insert({
+          supabase.from("pervasiveness_responses_v2").insert({
             total_points: totalPoints || 0,
             all_user_answers: allUserAnswers || [],
             enjoyment_rating: 5, // デフォルト値
@@ -1461,6 +1481,41 @@ const QuizGame = () => {
   const [isPointsAnimating, setIsPointsAnimating] = useState(false)
   const [evaluation, setEvaluation] = useState<string>("")
   const [backgroundPatternIndex, setBackgroundPatternIndex] = useState(0) // 背景パターンのインデックス
+  const [isMuted, setIsMuted] = useState(false)
+  const bgmRef = useRef<HTMLAudioElement | null>(null)
+
+  // 効果音再生ヘルパー関数
+  const playSoundEffect = useCallback((soundPath: string) => {
+    if (!isMuted) {
+      const audio = new Audio(soundPath)
+      audio.volume = 0.5
+      audio.play().catch(console.error)
+    }
+  }, [isMuted])
+
+  // BGM再生管理
+  useEffect(() => {
+    const shouldPlayBgm = gameState !== "intro" && gameState !== "result"
+
+    if (shouldPlayBgm && !isMuted) {
+      if (!bgmRef.current) {
+        bgmRef.current = new Audio("/sound/gamebgmchild.mp3")
+        bgmRef.current.loop = true
+        bgmRef.current.volume = 0.3
+      }
+      bgmRef.current.play().catch(console.error)
+    } else {
+      if (bgmRef.current) {
+        bgmRef.current.pause()
+      }
+    }
+
+    return () => {
+      if (bgmRef.current) {
+        bgmRef.current.pause()
+      }
+    }
+  }, [gameState, isMuted])
 
   const calculateTotalPoints = useCallback(() => {
     const points = userAnswers.reduce((total, answer, index) => {
@@ -1470,6 +1525,16 @@ const QuizGame = () => {
       return total
     }, 0)
 
+    // 効果音を再生
+    if (points > 0) {
+      const has300 = userAnswers.some((answer, index) => answer.trim() !== "" && (index + 1) % 3 === 0)
+      if (has300) {
+        playSoundEffect("/sound/300ptnextpage.mp3")
+      } else {
+        playSoundEffect("/sound/100pt.mp3")
+      }
+    }
+
     const newTotalPoints = Math.min(totalPoints + points, MAX_POINTS_PER_QUIZ)
     setTotalPoints(newTotalPoints)
 
@@ -1478,7 +1543,7 @@ const QuizGame = () => {
 
     setIsPointsAnimating(true)
     setTimeout(() => setIsPointsAnimating(false), 1000)
-  }, [userAnswers, totalPoints])
+  }, [userAnswers, totalPoints, playSoundEffect])
 
   const getEvaluation = useCallback((filledAnswers: number) => {
     if (filledAnswers >= MAX_ANSWERS) return "PERFECT"
@@ -1520,6 +1585,7 @@ const QuizGame = () => {
 
   // handleEndQuiz関数を以下のように修正します
   const handleEndQuiz = useCallback(async () => {
+    playSoundEffect("/sound/gamefinish.mp3")
     calculateTotalPoints()
 
     // 現在までの回答を全回答履歴に追加
@@ -1527,7 +1593,7 @@ const QuizGame = () => {
 
     // 直接結果ページに遷移
     setGameState("result")
-  }, [calculateTotalPoints, allUserAnswers, userAnswers, totalPoints])
+  }, [calculateTotalPoints, allUserAnswers, userAnswers, totalPoints, playSoundEffect])
 
   const addAnswerField = useCallback(() => {
     if (userAnswers.length < MAX_ANSWERS && userAnswers[userAnswers.length - 1].trim() !== "") {
@@ -1544,6 +1610,7 @@ const QuizGame = () => {
   }, [])
 
   const restartQuiz = useCallback(() => {
+    playSoundEffect("/sound/replay.mp3")
     setCurrentQuiz(0)
     setTotalPoints(0)
     setUserAnswers([""])
@@ -1551,7 +1618,7 @@ const QuizGame = () => {
     setAllUserAnswers([])
     setBackgroundPatternIndex(0) // 背景パターンをリセット
     setGameState("quiz")
-  }, [])
+  }, [playSoundEffect])
 
   const handleSurveySubmit = useCallback(
     async (enjoyment: number, mentalImprovement: number, feedback: string) => {
@@ -1564,7 +1631,7 @@ const QuizGame = () => {
       // Supabaseに基本データを送信
       if (supabase && isSupabaseConfigured) {
         try {
-          const { data, error } = await supabase.from("pervasiveness_responses").insert({
+          const { data, error } = await supabase.from("pervasiveness_responses_v2").insert({
             total_points: newTotalPoints,
             all_user_answers: allUserAnswers,
             enjoyment_rating: enjoyment,
@@ -1608,10 +1675,15 @@ const QuizGame = () => {
     }
   }, [currentQuiz, userAnswers, calculateTotalPoints])
 
+  const handleStart = useCallback(() => {
+    playSoundEffect("/sound/gamestart.mp3")
+    setGameState("quiz")
+  }, [playSoundEffect])
+
   return (
     <div className="min-h-screen bg-green-200 flex items-center justify-center relative overflow-hidden">
       <AnimatePresence mode="wait">
-        {gameState === "intro" && <IntroPage key="intro" onStart={() => setGameState("quiz")} />}
+        {gameState === "intro" && <IntroPage key="intro" onStart={handleStart} isMuted={isMuted} setIsMuted={setIsMuted} />}
         {gameState === "quiz" && (
           <motion.div
             key="quiz"
@@ -1633,6 +1705,7 @@ const QuizGame = () => {
               onSubmit={handleSubmit}
               onEndQuiz={handleEndQuiz}
               onTimeUp={handleTimeUp}
+              playSoundEffect={playSoundEffect}
             />
           </motion.div>
         )}

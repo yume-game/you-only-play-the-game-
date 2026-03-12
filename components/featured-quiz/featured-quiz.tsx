@@ -48,7 +48,7 @@ export function FeaturedQuiz() {
           <Badge variant="outline" className="w-fit mb-4 text-white border-white hover:bg-white/20">
             {t("featured_badge")}
           </Badge>
-          <h3 className="text-2xl md:text-3xl font-bold mb-2">{t("featured_title")}</h3>
+          <h3 className="text-2xl md:text-3xl font-extrabold mb-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>{t("featured_title")}</h3>
           <p className="text-white/80 mb-4">
             {t("featured_description")}
           </p>

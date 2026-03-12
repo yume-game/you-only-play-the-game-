@@ -34,9 +34,33 @@ React
 propsの型定義は必須
 useEffectの依存配列は必ず正確に記述
 カスタムフックはuseプレフィックス必須
-CSS 
+CSS
 Tailwind CSSを優先使用
 カスタムCSSが必要な場合はCSS Modules
 レスポンシブ対応は必須（mobile-first）
+
+## 絶対変更禁止コード（Affiliate Code Protection）
+
+以下のコードは**絶対に変更・リファクタリング・最適化してはならない**：
+
+### `components/games/selfworthre/selfworthrelative.tsx` - AffiliateComponent（291行目〜）
+
+- **理由**: アフィリエイト会社（A8.net）の規約により、HTMLコードを寸分違わず使用する必要がある
+- **dangerouslySetInnerHTML**の使用は意図的であり、セキュリティ警告があっても変更禁止
+- `affiliateHtml`変数内のHTMLタグ・属性・URL・パラメータは一切変更禁止
+- コンポーネント自体の削除・移動・名前変更も禁止
+- Reactのベストプラクティスに反していても、このコードには適用しない
+
+```
+禁止事項:
+- aタグをLinkコンポーネントに変換
+- imgタグをImageコンポーネントに変換
+- インラインスタイルのTailwind化
+- HTML文字列のJSX化
+- URL・パラメータの変更
+- alt属性の追加・変更
+```
+
+このコードに触れる必要がある場合は、**必ずユーザーに確認を取ること**。
 
 

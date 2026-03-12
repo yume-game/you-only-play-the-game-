@@ -71,7 +71,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
               <div className="w-8 h-8 border-4 border-forest-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
             <div>
-              <h3 className="font-semibold text-forest-700 mb-2">{quiz.title}</h3>
+              <h3 className="font-extrabold text-forest-700 mb-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>{quiz.title}</h3>
               <p className="text-sm text-forest-600 mb-4">{t("quiz_card_loading")}</p>
               <Progress value={loadingProgress} className="w-full mb-2" />
               <p className="text-xs text-forest-500">{Math.round(loadingProgress)}%</p>
@@ -101,7 +101,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
 
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg font-semibold text-forest-700 line-clamp-2">{quiz.title}</CardTitle>
+          <CardTitle className="text-lg font-extrabold text-forest-700 line-clamp-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>{quiz.title}</CardTitle>
           <Badge variant="outline" className="text-xs border-forest-300 text-forest-600 shrink-0">
             {quiz.category}
           </Badge>

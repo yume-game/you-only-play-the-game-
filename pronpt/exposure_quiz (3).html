@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エクスポージャー理解クイズ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap');
+
+  :root {
+    --bg: #f5f7f2;
+    --surface: #edf0e8;
+    --card: #ffffff;
+    --accent: #6aad20;
+    --accent2: #8fcc3a;
+    --danger: #d94f4f;
+    --text: #1e2a18;
+    --muted: #6b7c60;
+    --border: rgba(106,173,32,0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 60px;
+    overflow-x: hidden;
+  }
+
+  /* Background pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(106,173,32,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 90%, rgba(143,204,58,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 680px;
+  }
+
+  /* ========== TITLE ========== */
+  .title-block {
+    text-align: center;
+    padding: 40px 0 32px;
+  }
+
+  .title-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(26px, 5vw, 38px);
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .title-sub {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ========== INFO CARD ========== */
+  .info-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+
+  .info-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .info-card h2 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 16px;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .info-card h2::before {
+    content: '📖';
+    font-size: 18px;
+  }
+
+  .info-items {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .info-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .info-num {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: linear-gradient(135deg, var(--accent), #6aad20);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0a1a08;
+    margin-top: 1px;
+  }
+
+  .info-num.emoji {
+    background: transparent;
+    font-size: 18px;
+    border: none;
+  }
+
+  .info-text strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .info-text p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .info-text p em {
+    color: var(--accent2);
+    font-style: normal;
+  }
+
+  /* ========== SECTION DIVIDER ========== */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 20px;
+  }
+  .section-divider span {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    opacity: 0.6;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+
+  .start-wrap {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .btn-start {
+    background: linear-gradient(135deg, var(--accent), #6aad20);
+    color: #0a1a08;
+    border: none;
+    padding: 16px 48px;
+    border-radius: 50px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(168,212,79,0.35);
+    letter-spacing: 1px;
+  }
+
+  .btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(168,212,79,0.5);
+  }
+
+  /* ========== QUIZ SECTION ========== */
+  #quiz-section {
+    display: none;
+  }
+
+  .progress-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--surface);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-label {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .quiz-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    margin-bottom: 24px;
+    animation: fadeSlide 0.4s ease;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    margin-bottom: 14px;
+    opacity: 0.7;
+  }
+
+  .q-text {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 28px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+
+  .option:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: rgba(106,173,32,0.07);
+    transform: translateX(4px);
+  }
+
+  .option.correct {
+    border-color: var(--accent);
+    background: rgba(106,173,32,0.10);
+  }
+
+  .option.wrong {
+    border-color: var(--danger);
+    background: rgba(217,79,79,0.08);
+  }
+
+  .option.disabled { cursor: default; }
+
+  .opt-icon {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .option.correct .opt-icon { color: var(--accent); background: rgba(106,173,32,0.15); }
+  .option.wrong .opt-icon   { color: var(--danger);  background: rgba(217,79,79,0.12); }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    display: none;
+  }
+
+  .feedback.correct-fb {
+    background: rgba(106,173,32,0.08);
+    border: 1px solid rgba(106,173,32,0.25);
+    color: #3d7a10;
+  }
+
+  .feedback.wrong-fb {
+    background: rgba(217,79,79,0.07);
+    border: 1px solid rgba(217,79,79,0.25);
+    color: var(--danger);
+  }
+
+  .btn-next {
+    margin-top: 20px;
+    background: transparent;
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    padding: 12px 32px;
+    border-radius: 50px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: none;
+  }
+
+  .btn-next:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ========== RESULT ========== */
+  #result-section {
+    display: none;
+    text-align: center;
+    padding: 40px 0;
+    animation: fadeSlide 0.5s ease;
+  }
+
+  .result-icon { font-size: 64px; margin-bottom: 20px; }
+
+  .result-score {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 52px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .result-msg {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .result-sub {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 420px;
+    margin: 0 auto 36px;
+  }
+
+  .btn-retry {
+    background: linear-gradient(135deg, var(--accent), #6aad20);
+    color: #0a1a08;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 50px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .btn-retry:hover { transform: scale(1.04); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="title-block">
+    <div class="title-label">Exposure Therapy</div>
+    <h1>エクスポージャー<br>理解チェック</h1>
+    <p class="title-sub">治療を始める前に、大切なポイントを確認しよう</p>
+  </div>
+
+  <!-- INFO CARD 1: What is Exposure -->
+  <div class="info-card">
+    <h2>エクスポージャーとは何か？</h2>
+    <div class="info-items">
+      <div class="info-item">
+        <div class="info-num emoji">💡</div>
+        <div class="info-text">
+          <strong>怖いものに、あえて段階的に向き合う治療法</strong>
+          <p>エクスポージャーとは、不安や恐怖を感じるトリガー（きっかけ）に<em>意図的・段階的に向き合う</em>ことで、脳に「これは本当は危険じゃない」と再学習させる行動療法です。</p>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-num emoji">🪜</div>
+        <div class="info-text">
+          <strong>怖さを10段階に分けて、少しずつ進む</strong>
+          <p>いきなり一番怖いものに向き合う必要はない。怖さのレベルを1〜10に分け、<em>低いレベルから順番に</em>向き合っていく。各段階で不安が十分に落ち着いてから次に進む。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO CARD 2: Why it works -->
+  <div class="info-card">
+    <h2>なぜエクスポージャーは効果的なのか？</h2>
+    <div class="info-items">
+      <div class="info-item">
+        <div class="info-num">1</div>
+        <div class="info-text">
+          <strong>トリガーに慣れ、恐怖反応が弱まる</strong>
+          <p>怖いトリガーに繰り返しさらされ、何も悪いことが起きない体験を積むと、<em>脳がトリガーへの恐怖反応を徐々に弱めていく</em>（これを「消去」という）。</p>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-num">2</div>
+        <div class="info-text">
+          <strong>逃げないことで「やっぱり安全だった」と学べる</strong>
+          <p>回避をやめることで、脳は初めて<em>「逃げなくても大丈夫だった」</em>という事実に触れられる。逃げ続ける限り、この学習の機会は永遠に生まれない。</p>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-num">3</div>
+        <div class="info-text">
+          <strong>不安はピークを越えると、自然に落ち着く</strong>
+          <p>人間の不安反応は、向き合い続ければ<em>必ず徐々に減っていく</em>ことがわかっている。「ずっとこの不快感が続く」は脳の勘違いで、実際には時間とともに落ち着く。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO CARD 3: Core points -->
+  <div class="info-card">
+    <h2>治療前に知ってほしいこと</h2>
+    <div class="info-items">
+      <div class="info-item">
+        <div class="info-num emoji">⚠️</div>
+        <div class="info-text">
+          <strong>回避すると、不安はどんどん大きくなる</strong>
+          <p>怖いものから逃げると一時的に楽になる。しかし脳は<em>「逃げたから助かった＝やっぱり危険だ」</em>と学習し、不安はさらに強くなっていく。逃げ続けるほど怖さは増える。</p>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-num emoji">🧠</div>
+        <div class="info-text">
+          <strong>不安は「誤作動した警報」である</strong>
+          <p>本来、不安は危険から身を守るために必要なもの。しかし今あなたが感じている不安は、<em>実際には危険でないものに対して鳴り続けている誤作動した警報</em>。エクスポージャーはその警報をリセットする作業だ。</p>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-num emoji">💪</div>
+        <div class="info-text">
+          <strong>一時的な不快感は、回復の証拠</strong>
+          <p>エクスポージャー中の不快感は治療が効いているサイン。<em>向き合い続けることで必ず落ち着いていく</em>。この体験を繰り返すことが、脳の再学習につながる。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="start-wrap" id="start-section">
+    <button class="btn-start" onclick="startQuiz()">理解度クイズに挑戦する →</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz-section">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+      <span class="progress-label" id="prog-label">1 / 3</span>
+    </div>
+    <div class="quiz-card" id="quiz-card">
+      <div class="q-label" id="q-label">QUESTION 01</div>
+      <div class="q-text" id="q-text"></div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">次の問題へ →</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-section">
+    <div class="result-icon" id="result-icon">🎉</div>
+    <div class="result-score" id="result-score"></div>
+    <div class="result-msg" id="result-msg"></div>
+    <p class="result-sub" id="result-sub"></p>
+    <button class="btn-retry" onclick="retry()">もう一度チャレンジ</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "エクスポージャーとはどのような治療法ですか？",
+    options: [
+      "薬を使って不安を抑える治療法",
+      "怖いものに段階的に向き合い、脳に再学習させる治療法",
+      "不安な気持ちをひたすら我慢する訓練"
+    ],
+    correct: 1,
+    fb_correct: "✅ 正解！　エクスポージャーは、怖いトリガーに意図的・段階的に向き合うことで、脳に「これは本当は危険じゃない」と再学習させる行動療法です。",
+    fb_wrong:  "❌ 不正解。　エクスポージャーは薬でも我慢でもありません。怖いものに段階的に向き合い、脳に「安全だった」と繰り返し学習させることで不安を減らしていく治療法です。"
+  },
+  {
+    q: "エクスポージャーが効果的な理由として、正しいものはどれですか？",
+    options: [
+      "怖いものに向き合うと、脳が恐怖反応を忘れていくから",
+      "不安を感じないようにリラックスできるようになるから",
+      "怖いものへの記憶が完全に消えるから"
+    ],
+    correct: 0,
+    fb_correct: "✅ 正解！　怖いトリガーに繰り返しさらされ、何も悪いことが起きない体験を積むと、脳がそのトリガーへの恐怖反応を徐々に弱めていきます（これを「消去」といいます）。",
+    fb_wrong:  "❌ 不正解。　エクスポージャーの効果は「記憶を消す」でも「リラックスする」でもありません。実際には向き合い続けることで脳が恐怖反応を弱め、「危険じゃない」と学習し直すことで不安が減ります。"
+  },
+  {
+    q: "怖いものを繰り返し回避（避け続ける）と、不安はどうなるでしょう？",
+    options: ["不安が少しずつ減っていく", "不安がさらに大きく強くなる", "何も変わらない"],
+    correct: 1,
+    fb_correct: "✅ 正解！　回避すると脳は「逃げて助かった＝やはり危険だ」と学習します。回避するほど不安は強化され、生活への支障も大きくなっていきます。",
+    fb_wrong:  "❌ 不正解。　逃げることで一時は楽になっても、脳は「危険だから逃げた」と学習してしまいます。その結果、不安はどんどん大きくなります。"
+  },
+  {
+    q: "エクスポージャー治療の目的として、最も正しいものはどれですか？",
+    options: [
+      "怖いものを頭の中から完全に消し去る",
+      "「本当は危険じゃない」と脳に繰り返し学習させる",
+      "薬を使わずに気分を落ち着かせる"
+    ],
+    correct: 1,
+    fb_correct: "✅ 正解！　エクスポージャーは「怖いものがなくなる」のではなく、実際に向き合うことで「危険じゃなかった」という新しい学習を脳に積み重ねていく治療です。",
+    fb_wrong:  "❌ 不正解。　エクスポージャーの目的は、トリガーに段階的に向き合い、脳に「やっぱり安全だった」と再学習させることです。"
+  },
+  {
+    q: "エクスポージャー中に不快感・不安感が高まったとき、その後どうなりますか？",
+    options: [
+      "向き合い続けると、不快感は徐々に減っていく",
+      "向き合い続けるほど、不快感はずっと増え続ける",
+      "すぐに消えるので心配しなくてよい"
+    ],
+    correct: 0,
+    fb_correct: "✅ 正解！　不快感はピークを迎えた後、必ず落ち着いてきます。「ずっとこのまま」ということはありません。これを体験することが治療の大きな一歩です。",
+    fb_wrong:  "❌ 不正解。　怖い場面に向き合い続けると、不快感は一時的に高まるものの、必ず落ち着いていきます。永遠に続く不快感はありません。"
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+function startQuiz() {
+  document.getElementById('start-section').style.display = 'none';
+  document.getElementById('quiz-section').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  const q = questions[current];
+  const total = questions.length;
+  document.getElementById('prog-fill').style.width = ((current / total) * 100) + '%';
+  document.getElementById('prog-label').textContent = (current + 1) + ' / ' + total;
+  document.getElementById('q-label').textContent = 'QUESTION ' + String(current + 1).padStart(2, '0');
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'none';
+
+  const optDiv = document.getElementById('options');
+  optDiv.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<span class="opt-icon">${String.fromCharCode(65+i)}</span>${opt}`;
+    btn.onclick = () => selectAnswer(i);
+    optDiv.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const opts = document.querySelectorAll('.option');
+  const fb = document.getElementById('feedback');
+
+  opts.forEach((o, i) => {
+    o.classList.add('disabled');
+    if (i === q.correct) o.classList.add('correct');
+    else if (i === idx && idx !== q.correct) o.classList.add('wrong');
+    o.querySelector('.opt-icon').textContent = i === q.correct ? '✓' : (i === idx ? '✗' : String.fromCharCode(65+i));
+  });
+
+  const isCorrect = idx === q.correct;
+  if (isCorrect) score++;
+  fb.className = 'feedback ' + (isCorrect ? 'correct-fb' : 'wrong-fb');
+  fb.textContent = isCorrect ? q.fb_correct : q.fb_wrong;
+  fb.style.display = 'block';
+
+  const btnNext = document.getElementById('btn-next');
+  btnNext.style.display = 'inline-block';
+  btnNext.textContent = current < questions.length - 1 ? '次の問題へ →' : '結果を見る →';
+}
+
+function nextQuestion() {
+  current++;
+  if (current < questions.length) {
+    // re-animate
+    const card = document.getElementById('quiz-card');
+    card.style.animation = 'none';
+    requestAnimationFrame(() => { card.style.animation = 'fadeSlide 0.4s ease'; });
+    showQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz-section').style.display = 'none';
+  const rs = document.getElementById('result-section');
+  rs.style.display = 'block';
+  document.getElementById('prog-fill').style.width = '100%';
+
+  const total = questions.length;
+  document.getElementById('result-score').textContent = score + ' / ' + total;
+
+  if (score === 5) {
+    document.getElementById('result-icon').textContent = '🌟';
+    document.getElementById('result-msg').textContent = '完璧！　準備バッチリです';
+    document.getElementById('result-sub').textContent = 'エクスポージャーの大切なポイントをすべて理解できています。不快感は一時的なものであり、向き合うことで必ず楽になります。治療を一歩一歩進めていきましょう。';
+  } else if (score >= 3) {
+    document.getElementById('result-icon').textContent = '👍';
+    document.getElementById('result-msg').textContent = 'よくできました！　ほぼ理解できています';
+    document.getElementById('result-sub').textContent = '大部分は理解できています。間違えた問題の解説をもう一度確認して、治療のポイントをしっかり押さえましょう。';
+  } else {
+    document.getElementById('result-icon').textContent = '📚';
+    document.getElementById('result-msg').textContent = 'もう一度、一緒に確認しよう';
+    document.getElementById('result-sub').textContent = '上の説明をもう一度読んでから、再チャレンジしてみてください。理解が深まるほど、治療の効果も上がります。';
+  }
+}
+
+function retry() {
+  current = 0; score = 0;
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('quiz-section').style.display = 'block';
+  showQuestion();
+}
+</script>
+</body>
+</html>

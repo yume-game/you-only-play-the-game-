@@ -21,7 +21,26 @@ export const metadata: Metadata = {
   title: "メンタルゲーム",
   description:
     "ドーパミンの知識とメンタルヘルスの知識の融合で、遊んでるだけで気持ちが楽になる。",
-  icons: '/image/icon.png', // シンプルな設定
+  icons: '/image/ladywhocleverphone.png',
+  openGraph: {
+    title: "メンタルゲーム",
+    description: "ドーパミンの知識とメンタルヘルスの知識の融合で、遊んでるだけで気持ちが楽になる。",
+    images: [
+      {
+        url: '/image/ladywhoclever.png',
+        width: 1200,
+        height: 630,
+        alt: 'メンタルゲーム',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "メンタルゲーム",
+    description: "ドーパミンの知識とメンタルヘルスの知識の融合で、遊んでるだけで気持ちが楽になる。",
+    images: ['/image/ladywhoclever.png'],
+  },
 };
 
 export default function RootLayout({

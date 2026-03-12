@@ -8,7 +8,15 @@
       "Bash(git pull:*)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm install)",
+      "Bash(pip --version:*)",
+      "Bash(pip3 --version:*)",
+      "Bash(where:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(find:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

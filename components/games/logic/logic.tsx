@@ -10,8 +10,9 @@ import { useRouter } from "next/navigation"
 import ConfettiCanvas from "@/components/animations/ConfettiCanvas"
 import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Supabaseクライアントの設定（Selfworth用プロジェクト）
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH
 
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
 
@@ -118,7 +119,7 @@ const AffiliateComponent = ({ className = "" }: { className?: string }) => {
 }
 
 // スタート画面
-const IntroPage = ({ onStart }: { onStart: () => void }) => {
+const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMuted: boolean; setIsMuted: (value: boolean) => void }) => {
   const [isTermsOpen, setIsTermsOpen] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
@@ -139,6 +140,21 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
         <p className="text-base text-yellow-200 font-semibold">
           ゲーム内でのご回答していただいた内容は機密資料としての保管を徹底いたします。
         </p>
+
+        {/* 消音モードボタン */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${
+              isMuted
+                ? "bg-gray-500 hover:bg-gray-600"
+                : "bg-green-500 hover:bg-green-600"
+            } text-white font-medium`}
+          >
+            <span className="text-xl">{isMuted ? "🔇" : "🔊"}</span>
+            <span>{isMuted ? "消音モード中" : "消音モードを選択"}</span>
+          </button>
+        </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-center space-x-3">
@@ -180,11 +196,13 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
 const InputPage = ({
   actionSets,
   onActionSetsComplete,
-  onExit
+  onExit,
+  playSoundEffect
 }: {
   actionSets: ActionSet[]
   onActionSetsComplete: (sets: ActionSet[]) => void
   onExit: () => void
+  playSoundEffect: (soundPath: string) => void
 }) => {
   const [currentSets, setCurrentSets] = useState<ActionSet[]>(
     actionSets.length > 0 ? actionSets : Array(2).fill(null).map(() => ({
@@ -211,6 +229,7 @@ const InputPage = ({
 
     // タイピング時に草エフェクトのみ表示
     if (value.trim() !== "") {
+      playSoundEffect("/sound/typing.mp3")
       const animationKey = `field-${index}-${field}`
       setFieldAnimations((prev) => ({ ...prev, [animationKey]: true }))
 
@@ -228,6 +247,7 @@ const InputPage = ({
     const fieldKey = `${index}-${field}`
     if (completedFields[fieldKey]) return
 
+    playSoundEffect("/sound/100pt.mp3")
     setCompletedFields(prev => ({ ...prev, [fieldKey]: true }))
     setTotalPoints(prev => prev + 100)
     setShowConfetti(true)
@@ -245,6 +265,7 @@ const InputPage = ({
     )
 
     if (hasValidSet) {
+      playSoundEffect("/sound/300ptnextpage.mp3")
       onActionSetsComplete(currentSets)
     }
   }
@@ -484,11 +505,13 @@ const InputPage = ({
 const GamePage = ({
   actionSets,
   onGameComplete,
-  onExit
+  onExit,
+  playSoundEffect
 }: {
   actionSets: ActionSet[]
   onGameComplete: (score: number) => void
   onExit: () => void
+  playSoundEffect: (soundPath: string) => void
 }) => {
   const [timeLeft, setTimeLeft] = useState(60)
   const [score, setScore] = useState(0)
@@ -517,6 +540,7 @@ const GamePage = ({
   // タイマー
   useEffect(() => {
     if (timeLeft <= 0) {
+      playSoundEffect("/sound/gamefinish.mp3")
       onGameComplete(score)
       return
     }
@@ -526,7 +550,7 @@ const GamePage = ({
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [timeLeft, score, onGameComplete])
+  }, [timeLeft, score, onGameComplete, playSoundEffect])
 
   // スポーン速度の調整（時間経過で速くなる）
   useEffect(() => {
@@ -607,6 +631,7 @@ const GamePage = ({
     // 正解判定
     if (hoveredDoReasonIndex === hoveredReason.correctIndex) {
       const points = hoveredReason.isSpecial ? 700 : 100
+      playSoundEffect("/sound/100pt.mp3")
       setScore(prev => prev + points)
       setShowConfetti(true)
       setTimeout(() => setShowConfetti(false), 500)
@@ -615,6 +640,7 @@ const GamePage = ({
       setHoveredDoReasonIndex(null)
     } else {
       // 不正解
+      playSoundEffect("/sound/timeup.mp3")
       setScore(prev => prev - 50)
       setFloatingReasons(prev => prev.filter(r => r.id !== hoveredReasonId))
       setHoveredReasonId(null)
@@ -896,6 +922,41 @@ const LogicGame = () => {
   const [score, setScore] = useState(0)
   const [enjoymentRating, setEnjoymentRating] = useState(5)
   const [improvementRating, setImprovementRating] = useState(5)
+  const [isMuted, setIsMuted] = useState(false)
+  const bgmRef = useRef<HTMLAudioElement | null>(null)
+
+  // 効果音再生ヘルパー関数
+  const playSoundEffect = useCallback((soundPath: string) => {
+    if (!isMuted) {
+      const audio = new Audio(soundPath)
+      audio.volume = 0.5
+      audio.play().catch(console.error)
+    }
+  }, [isMuted])
+
+  // BGM再生管理
+  useEffect(() => {
+    const shouldPlayBgm = gameState !== "intro" && gameState !== "result"
+
+    if (shouldPlayBgm && !isMuted) {
+      if (!bgmRef.current) {
+        bgmRef.current = new Audio("/sound/gamebgmchild.mp3")
+        bgmRef.current.loop = true
+        bgmRef.current.volume = 0.3
+      }
+      bgmRef.current.play().catch(console.error)
+    } else {
+      if (bgmRef.current) {
+        bgmRef.current.pause()
+      }
+    }
+
+    return () => {
+      if (bgmRef.current) {
+        bgmRef.current.pause()
+      }
+    }
+  }, [gameState, isMuted])
 
   const handleActionSetsComplete = (sets: ActionSet[]) => {
     setActionSets(sets)
@@ -910,7 +971,7 @@ const LogicGame = () => {
   const handleSurveySubmit = () => {
     // Supabaseにデータを保存
     if (supabase) {
-      supabase.from("logic_game_responses").insert({
+      supabase.from("logic_game_responses_v2").insert({
         score,
         action_sets: actionSets.filter(set =>
           set.action.trim() && set.notDoReason1.trim() && set.notDoReason2.trim() && set.doReason.trim() && set.benefit.trim()
@@ -930,6 +991,7 @@ const LogicGame = () => {
   }
 
   const handleRestart = () => {
+    playSoundEffect("/sound/replay.mp3")
     setGameState("intro")
     setActionSets([])
     setScore(0)
@@ -941,15 +1003,21 @@ const LogicGame = () => {
     router.push("/")
   }
 
+  const handleStart = () => {
+    playSoundEffect("/sound/gamestart.mp3")
+    setGameState("input")
+  }
+
   return (
     <AnimatePresence mode="wait">
-      {gameState === "intro" && <IntroPage key="intro" onStart={() => setGameState("input")} />}
+      {gameState === "intro" && <IntroPage key="intro" onStart={handleStart} isMuted={isMuted} setIsMuted={setIsMuted} />}
       {gameState === "input" && (
         <InputPage
           key="input"
           actionSets={actionSets}
           onActionSetsComplete={handleActionSetsComplete}
           onExit={handleExit}
+          playSoundEffect={playSoundEffect}
         />
       )}
       {gameState === "game" && (
@@ -958,6 +1026,7 @@ const LogicGame = () => {
           actionSets={actionSets}
           onGameComplete={handleGameComplete}
           onExit={handleExit}
+          playSoundEffect={playSoundEffect}
         />
       )}
       {gameState === "survey" && (

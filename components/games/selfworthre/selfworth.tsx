@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useCallback } from "react" // ← useStateを追加
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
@@ -12,8 +12,9 @@ import ButtonAnimationCanvas from "@/components/animations/ButtonAnimationCanvas
 import TransitionCanvas from "@/components/animations/TransitionCanvas"
 import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Supabaseクライアントの設定（Selfworth用プロジェクト）
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH
 
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
 
@@ -287,15 +288,26 @@ const ImagePreloader = ({ images, onComplete }: { images: string[]; onComplete: 
   )
 }
 
-const AffiliateComponent = ({ className = "", affiliateTextPattern }: { className?: string; affiliateTextPattern?: any }) => {
+const AffiliateComponent = ({ className = "", affiliateTextPattern, onAffiliateClick }: { className?: string; affiliateTextPattern?: { headline: string; description: string }; onAffiliateClick?: () => void }) => {
   const affiliateHtml = `<a href="https://px.a8.net/svt/ejp?a8mat=45167E+679KMQ+5OI8+5ZEMP" rel="nofollow">
 <img border="0" width="300" height="250" alt="" src="https://www27.a8.net/svt/bgt?aid=250317482375&wid=001&eno=01&mid=s00000026504001005000&mc=1"></a>
 <img border="0" width="1" height="1" src="https://www10.a8.net/0.gif?a8mat=45167E+679KMQ+5OI8+5ZEMP" alt="">`
 
+  // アフィリエイトリンクのクリックを検知
+  const handleContainerClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    // aタグまたはその子要素（img等）がクリックされた場合
+    if (target.tagName === 'A' || target.closest('a')) {
+      if (onAffiliateClick) {
+        onAffiliateClick()
+      }
+    }
+  }
+
   return (
-    <div className={`w-full mx-auto mt-2 mb-2 ${className}`}>
-      
-      <div 
+    <div className={`w-full mx-auto mt-2 mb-2 ${className}`} onClick={handleContainerClick}>
+
+      <div
         style={{
           fontFamily: "'Hiragino Sans', 'Yu Gothic', sans-serif",
           margin: 0,
@@ -308,19 +320,19 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
         }}
       >
         {/* アフィリエイトHTMLをそのまま挿入 */}
-        <div 
-          style={{ 
-            display: "flex", 
-            justifyContent: "center", 
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
             alignItems: "center",
-            marginBottom: "20px" 
+            marginBottom: "20px"
           }}
           dangerouslySetInnerHTML={{ __html: affiliateHtml }}
         />
-        
+
         {/* 説明文 */}
         {affiliateTextPattern && (
-          <div 
+          <div
             style={{
               fontSize: "18px",
               fontWeight: "bold",
@@ -336,14 +348,14 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
             {affiliateTextPattern.description}
           </div>
         )}
-        
+
         {/* ボタンコンテナ */}
         <div style={{ textAlign: "center" }}>
           <div
             style={{
               display: "inline-block",
               padding: "15px 30px",
-              
+
               backgroundColor: "#ff6b6b",
               borderRadius: "50px",
               fontSize: "1.1rem",
@@ -363,11 +375,11 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
               e.currentTarget.style.transform = "translateY(0px)"
               e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.2)"
             }}
-            dangerouslySetInnerHTML={{ 
+            dangerouslySetInnerHTML={{
               __html: `<a href="https://px.a8.net/svt/ejp?a8mat=45167E+679KMQ+5OI8+BW8O2&a8ejpredirect=https%3A%2F%2Fkimochi-mental.com%2Fclient%2Fhome" rel="nofollow">今すぐ予約</a>
-<img border="0" width="1" height="1" src="https://www19.a8.net/0.gif?a8mat=45167E+679KMQ+5OI8+BW8O2" alt="">` 
+<img border="0" width="1" height="1" src="https://www19.a8.net/0.gif?a8mat=45167E+679KMQ+5OI8+BW8O2" alt="">`
             }}
-            
+
           />
         </div>
       </div>
@@ -375,7 +387,7 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
   )
 }
 
-const IntroPage = ({ onStart }: { onStart: () => void }) => {
+const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMuted: boolean; setIsMuted: (value: boolean) => void }) => {
   const [imagesLoaded, setImagesLoaded] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [allImages, setAllImages] = useState<string[]>([])
@@ -430,6 +442,21 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
           あなたを守るため、個人情報は入力しないでください。　ex 　佐々木君がではなく　ｓ君がとしましょう。
         </p>
 
+        {/* 消音モードボタン */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${
+              isMuted
+                ? "bg-gray-500 hover:bg-gray-600"
+                : "bg-green-500 hover:bg-green-600"
+            } text-white font-medium`}
+          >
+            <span className="text-xl">{isMuted ? "🔇" : "🔊"}</span>
+            <span>{isMuted ? "消音モード中" : "消音モードを選択"}</span>
+          </button>
+        </div>
+
         {!imagesLoaded && allImages.length > 0 ? (
           <ImagePreloader images={allImages} onComplete={handleImagesLoaded} />
         ) : allImages.length === 0 ? (
@@ -455,6 +482,11 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
                   <span className="text-white">同意する</span>
                 </label>
               </div>
+
+              {/* 注意書き */}
+              <p className="text-red-300 text-sm text-center mb-4">
+                重度のトラウマなどお持ちの方は私のゲームではなく、精神科医にかかる事を推奨いたします
+              </p>
 
               <Button
                 onClick={onStart}
@@ -483,6 +515,84 @@ const IntroPage = ({ onStart }: { onStart: () => void }) => {
   )
 }
 
+// はじめに画面：性別・年代入力
+const PrestartPage = ({
+  gender,
+  setGender,
+  ageGroup,
+  setAgeGroup,
+  onContinue,
+}: {
+  gender: string
+  setGender: (value: string) => void
+  ageGroup: string
+  setAgeGroup: (value: string) => void
+  onContinue: () => void
+}) => {
+  return (
+    <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in">
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-green-100 to-green-200" />
+
+      <div className="relative z-10 max-w-md w-full bg-white rounded-xl p-8 shadow-2xl">
+        <h1 className="text-2xl font-bold text-green-800 mb-6 text-center">はじめに</h1>
+        <p className="text-gray-600 mb-6 text-center">あなたについて教えてください</p>
+
+        <div className="space-y-6">
+          {/* 性別 */}
+          <div>
+            <label className="block text-lg font-bold text-gray-700 mb-2">性別</label>
+            <div className="flex flex-wrap gap-2">
+              {["男性", "女性", "その他", "回答しない"].map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setGender(option)}
+                  className={`px-4 py-2 rounded-lg border-2 transition-all ${
+                    gender === option
+                      ? "bg-green-500 text-white border-green-500"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-green-300"
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 年代 */}
+          <div>
+            <label className="block text-lg font-bold text-gray-700 mb-2">年代</label>
+            <div className="flex flex-wrap gap-2">
+              {["10代", "20代", "30代", "40代", "50代", "60代以上"].map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setAgeGroup(option)}
+                  className={`px-4 py-2 rounded-lg border-2 transition-all ${
+                    ageGroup === option
+                      ? "bg-green-500 text-white border-green-500"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-green-300"
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 次へボタン */}
+          <div className="pt-4">
+            <Button
+              onClick={onContinue}
+              disabled={!gender || !ageGroup}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              次へ
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const QuizPage = ({
   currentQuiz,
@@ -494,6 +604,12 @@ const QuizPage = ({
   onEndQuiz,
   onDirectToAffiliate,
   onTimeUp,
+  userId,
+  sessionId,
+  gender,
+  ageGroup,
+  onSetHasSubmittedGameData,
+  playSoundEffect,
 }: {
   currentQuiz: number
   userAnswers: string[]
@@ -504,6 +620,12 @@ const QuizPage = ({
   onEndQuiz: () => void
   onDirectToAffiliate: () => void
   onTimeUp: () => void
+  userId: string
+  sessionId: string
+  gender: string
+  ageGroup: string
+  onSetHasSubmittedGameData: (value: boolean) => void
+  playSoundEffect: (soundPath: string) => void
 }) => {
   // デバイス判定フックを追加
   const isMobile = useIsMobile()
@@ -544,6 +666,7 @@ const QuizPage = ({
 
       // 入力が完了した時（空から文字が入力された時）にアニメーション
       if (previousValue === "" && value.trim() !== "") {
+        playSoundEffect("/sound/typing.mp3")
         const animationKey = `answer-${index}`
         setFieldAnimations((prev) => ({ ...prev, [animationKey]: true }))
 
@@ -950,7 +1073,36 @@ const QuizPage = ({
                 </div>
 
                 {/* アフィリエイト画像 */}
-                <div className="flex justify-center">
+                <div
+                  className="flex justify-center"
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement
+                    // aタグまたはその子要素（img等）がクリックされた場合
+                    if (target.tagName === 'A' || target.closest('a')) {
+                      console.log("QuizPage: アフィリエイト画像がクリックされました")
+                      // アフィリエイトクリックをaffiliate_clicksに記録
+                      if (supabase) {
+                        supabase.from("affiliate_clicks").insert({
+                          user_id: userId,
+                          session_id: sessionId,
+                          game_name: "selfworth",
+                          gender: gender || null,
+                          age_group: ageGroup || null,
+                          enjoyment_rating: null,
+                          improvement_rating: null,
+                          affiliate_clicked: true,
+                          affiliate_pattern_index: null,
+                        }).then(({ error }) => {
+                          if (error) {
+                            console.error("アフィリエイトクリックの記録に失敗:", error)
+                          } else {
+                            console.log("QuizPageからのアフィリエイトクリックが記録されました")
+                          }
+                        })
+                      }
+                    }
+                  }}
+                >
                   <div
                     dangerouslySetInnerHTML={{
                       __html: `<a href="https://px.a8.net/svt/ejp?a8mat=45167E+679KMQ+5OI8+5ZEMP" rel="nofollow">
@@ -962,7 +1114,32 @@ const QuizPage = ({
 
                 <div className="pt-4">
                   <Button
-                    onClick={onDirectToAffiliate}
+                    onClick={async () => {
+                      console.log("QuizPage: 終えるボタンがクリックされました")
+                      // ゲームデータをquiz_responses_v3に送信（完了を待ってから遷移）
+                      if (supabase) {
+                        const currentAnswers = userAnswers.filter((answer) => answer.trim() !== "")
+                        const allAnswers = [...allUserAnswers, currentAnswers].flat()
+                        const { error } = await supabase.from("quiz_responses_v3").insert({
+                          user_id: userId,
+                          session_id: sessionId,
+                          total_points: totalPoints,
+                          selected_values: allAnswers,
+                          action_plans: [],
+                          gender: gender,
+                          age_group: ageGroup,
+                          enjoyment_rating: null,
+                          improvement_rating: null,
+                        })
+                        if (error) {
+                          console.error("データの保存に失敗:", error)
+                        } else {
+                          console.log("終えるボタンからのデータが保存されました")
+                          onSetHasSubmittedGameData(true)
+                        }
+                      }
+                      onDirectToAffiliate()
+                    }}
                     className="w-full text-green-600 bg-transparent hover:text-green-700 hover:bg-green-50 font-bold border-0"
                   >
                     終える
@@ -1048,12 +1225,36 @@ const ResultPage = ({
   actionPlans,
   onRestart,
   onExit,
+  gender,
+  setGender,
+  ageGroup,
+  setAgeGroup,
+  enjoymentRating,
+  setEnjoymentRating,
+  improvementRating,
+  setImprovementRating,
+  userId,
+  sessionId,
+  hasSubmittedGameData,
+  onSetHasSubmittedGameData,
 }: {
   totalPoints: number
   selectedAnswers: string[]
   actionPlans: ActionPlan[]
   onRestart: () => void
   onExit: () => void
+  gender: string
+  setGender: (value: string) => void
+  ageGroup: string
+  setAgeGroup: (value: string) => void
+  enjoymentRating: number
+  setEnjoymentRating: (value: number) => void
+  improvementRating: number
+  setImprovementRating: (value: number) => void
+  userId: string
+  sessionId: string
+  hasSubmittedGameData: boolean
+  onSetHasSubmittedGameData: (value: boolean) => void
 }) => {
   // ページマウント時に上までスクロール
   useEffect(() => {
@@ -1071,6 +1272,76 @@ const ResultPage = ({
     setAffiliateTextPattern(affiliateTextPatterns[randomIndex])
     setAffiliatePatternIndex(randomIndex)
   }, [])
+
+  // 結果ページ表示時にゲームデータを自動送信（終えるボタンで送信済みでない場合のみ）
+  useEffect(() => {
+    if (hasSubmittedGameData) return
+
+    const saveGameData = async () => {
+      if (!supabase) return
+
+      try {
+        const { error } = await supabase.from("quiz_responses_v3").insert({
+          user_id: userId,
+          session_id: sessionId,
+          total_points: totalPoints,
+          selected_values: selectedAnswers,
+          action_plans: actionPlans.map(plan => plan.action).filter(action => action.trim() !== ""),
+          gender: gender,
+          age_group: ageGroup,
+          enjoyment_rating: null,
+          improvement_rating: null,
+        })
+
+        if (error) {
+          console.error("ゲームデータの自動保存に失敗:", error)
+        } else {
+          console.log("ゲームデータが自動保存されました")
+          onSetHasSubmittedGameData(true)
+        }
+      } catch (err) {
+        console.error("データ保存中にエラーが発生:", err)
+      }
+    }
+
+    saveGameData()
+  }, [])
+
+  // アンケート送信処理（affiliate_clicksのみ送信）
+  const handleSurveySubmit = async () => {
+    if (hasSubmitted || isSubmitting) return
+
+    setIsSubmitting(true)
+
+    if (supabase) {
+      try {
+        // アンケートデータをaffiliate_clicksに保存
+        const { error: affiliateError } = await supabase.from("affiliate_clicks").insert({
+          user_id: userId,
+          session_id: sessionId,
+          game_name: "selfworth",
+          gender: gender || null,
+          age_group: ageGroup || null,
+          enjoyment_rating: enjoymentRating,
+          improvement_rating: improvementRating,
+          affiliate_clicked: false,
+          affiliate_pattern_index: affiliatePatternIndex,
+        })
+
+        if (affiliateError) {
+          console.error("アンケートデータの保存に失敗:", affiliateError)
+        } else {
+          console.log("アンケートデータが保存されました")
+        }
+
+        setHasSubmitted(true)
+      } catch (err) {
+        console.error("データ保存中にエラーが発生:", err)
+      }
+    }
+
+    setIsSubmitting(false)
+  }
 
   // アフィリエイトリンクがクリックされた時の処理
   // handleAffiliateClick関数をuseCallbackでメモ化
@@ -1090,7 +1361,7 @@ const ResultPage = ({
       const shouldRedirect = true
       const redirectUrl = clickData?.url
 
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH) {
         console.log("Supabase環境変数が設定されていないため、データ保存をスキップします")
         setHasSubmitted(true)
         setIsSubmitting(false)
@@ -1101,20 +1372,21 @@ const ResultPage = ({
           }, 200)
         }
       } else {
-        supabase!.from("quiz_responses").insert({
-          total_points: totalPoints,
-          affiliate_pattern_index: affiliatePatternIndex,
+        supabase!.from("affiliate_clicks").insert({
+          user_id: userId,
+          session_id: sessionId,
+          game_name: "selfworth",
+          gender: gender || null,
+          age_group: ageGroup || null,
+          enjoyment_rating: enjoymentRating,
+          improvement_rating: improvementRating,
           affiliate_clicked: true,
-          affiliate_click_type: clickData?.clickType || "unknown",
-          selected_values: selectedAnswers,
-          action_plans: actionPlans.map(plan => plan.action).filter(action => action.trim() !== ""),
-          enjoyment_rating: null,
-          improvement_rating: null,
+          affiliate_pattern_index: affiliatePatternIndex,
         }).then(({ error }) => {
           if (error) {
-            console.error("データの保存に失敗しました:", error)
+            console.error("アフィリエイトクリックの記録に失敗:", error)
           } else {
-            console.log("データが正常に保存されました")
+            console.log("アフィリエイトクリックが記録されました")
           }
 
           setHasSubmitted(true)
@@ -1129,7 +1401,7 @@ const ResultPage = ({
         })
       }
     },
-    [isSubmitting, hasSubmitted, totalPoints, affiliatePatternIndex, selectedAnswers, actionPlans],
+    [isSubmitting, hasSubmitted, userId, sessionId, gender, ageGroup, enjoymentRating, improvementRating, affiliatePatternIndex],
   )
 
   // iframeからのメッセージを受信するリスナーを修正
@@ -1230,12 +1502,100 @@ const ResultPage = ({
             )}
           </div>
 
+          {/* アンケートセクション */}
+          {!hasSubmitted ? (
+            <div className="mt-8 pt-8 border-t-2 border-gray-200">
+              <h2 className="text-2xl font-bold text-purple-600 mb-6">📝 アンケートにご協力ください</h2>
+
+              <div className="space-y-6 text-left">
+                {/* 楽しさ */}
+                <div>
+                  <label className="block text-lg font-bold text-gray-700 mb-2">
+                    このゲームは楽しかったですか？ ({enjoymentRating}/10)
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={enjoymentRating}
+                    onChange={(e) => setEnjoymentRating(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-sm text-gray-500 mt-1">
+                    <span>つまらない</span>
+                    <span>とても楽しい</span>
+                  </div>
+                </div>
+
+                {/* 改善度 */}
+                <div>
+                  <label className="block text-lg font-bold text-gray-700 mb-2">
+                    自分を見つめ直すきっかけになりましたか？ ({improvementRating}/10)
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={improvementRating}
+                    onChange={(e) => setImprovementRating(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-sm text-gray-500 mt-1">
+                    <span>全くならなかった</span>
+                    <span>とてもなった</span>
+                  </div>
+                </div>
+
+                {/* 送信ボタン */}
+                <div className="text-center pt-4">
+                  <Button
+                    onClick={handleSurveySubmit}
+                    disabled={isSubmitting}
+                    className="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 text-lg"
+                  >
+                    {isSubmitting ? "送信中..." : "アンケートを送信"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-8 pt-8 border-t-2 border-gray-200 text-center">
+              <p className="text-xl text-green-600 font-bold">✓ アンケートにご協力ありがとうございました！</p>
+            </div>
+          )}
+
           {/* アフィリエイト部分を同じカード内に統合 */}
           <div className="mt-8 pt-8 border-t-2 border-gray-200">
             <h2 className="text-2xl font-bold text-orange-600 mt-8">{affiliateTextPattern.headline}</h2>
 
             <div className="text-center">
-              <AffiliateComponent className="mx-auto" affiliateTextPattern={affiliateTextPattern} />
+              <AffiliateComponent
+                className="mx-auto"
+                affiliateTextPattern={affiliateTextPattern}
+                onAffiliateClick={() => {
+                  console.log("アフィリエイトリンクがクリックされました")
+                  // アフィリエイトクリックをaffiliate_clicksに記録
+                  if (supabase) {
+                    supabase.from("affiliate_clicks").insert({
+                      user_id: userId,
+                      session_id: sessionId,
+                      game_name: "selfworth",
+                      gender: gender || null,
+                      age_group: ageGroup || null,
+                      enjoyment_rating: enjoymentRating,
+                      improvement_rating: improvementRating,
+                      affiliate_clicked: true,
+                      affiliate_pattern_index: affiliatePatternIndex,
+                    }).then(({ error }) => {
+                      if (error) {
+                        console.error("アフィリエイトクリックの記録に失敗:", error)
+                      } else {
+                        console.log("アフィリエイトクリックが記録されました")
+                      }
+                    })
+                  }
+                }}
+              />
             </div>
           </div>
         </div>
@@ -1728,16 +2088,70 @@ const ActionPlanPage = ({
 
 const QuizGame = () => {
   const router = useRouter()
-  const [gameState, setGameState] = useState<"intro" | "quiz" | "summary" | "action" | "result">("intro")
+  const [gameState, setGameState] = useState<"intro" | "prestart" | "quiz" | "summary" | "action" | "result">("intro")
   const [currentQuiz, setCurrentQuiz] = useState(0)
   const [userAnswers, setUserAnswers] = useState<string[]>([""])
   const [allUserAnswers, setAllUserAnswers] = useState<string[][]>([])
   const [totalPoints, setTotalPoints] = useState(0)
   const [enjoymentRating, setEnjoymentRating] = useState(5)
   const [improvementRating, setImprovementRating] = useState(5)
+  const [gender, setGender] = useState<string>("")
+  const [ageGroup, setAgeGroup] = useState<string>("")
+  const [userId, setUserId] = useState<string>("")
+  const [sessionId, setSessionId] = useState<string>("")
+  const [hasSubmittedGameData, setHasSubmittedGameData] = useState(false)
   // 新しいステート：価値観選択と行動プラン
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([])
   const [actionPlans, setActionPlans] = useState<ActionPlan[]>([])
+  const [isMuted, setIsMuted] = useState(false)
+  const bgmRef = useRef<HTMLAudioElement | null>(null)
+
+  // 効果音再生ヘルパー関数
+  const playSoundEffect = useCallback((soundPath: string) => {
+    if (!isMuted) {
+      const audio = new Audio(soundPath)
+      audio.volume = 0.5
+      audio.play().catch(console.error)
+    }
+  }, [isMuted])
+
+  // BGM再生管理
+  useEffect(() => {
+    const shouldPlayBgm = gameState !== "intro" && gameState !== "result"
+
+    if (shouldPlayBgm && !isMuted) {
+      if (!bgmRef.current) {
+        bgmRef.current = new Audio("/sound/gamebgmchild.mp3")
+        bgmRef.current.loop = true
+        bgmRef.current.volume = 0.3
+      }
+      bgmRef.current.play().catch(console.error)
+    } else {
+      if (bgmRef.current) {
+        bgmRef.current.pause()
+      }
+    }
+
+    return () => {
+      if (bgmRef.current) {
+        bgmRef.current.pause()
+      }
+    }
+  }, [gameState, isMuted])
+
+  // user_idとsession_idの初期化
+  useEffect(() => {
+    // user_id: localStorageから取得、なければ生成して保存
+    let storedUserId = localStorage.getItem("quiz_user_id")
+    if (!storedUserId) {
+      storedUserId = crypto.randomUUID()
+      localStorage.setItem("quiz_user_id", storedUserId)
+    }
+    setUserId(storedUserId)
+
+    // session_id: 毎回新規生成
+    setSessionId(crypto.randomUUID())
+  }, [])
 
   const handleUpdateAnswer = (index: number, value: string) => {
     const newAnswers = [...userAnswers]
@@ -1759,14 +2173,21 @@ const QuizGame = () => {
       setUserAnswers([""])
       // ゴールド問題の場合は300pt、通常は100pt
       const pointsToAdd = isGoldenQuestion(currentQuiz) ? 300 : 100
+      if (pointsToAdd === 300) {
+        playSoundEffect("/sound/300ptnextpage.mp3")
+      } else {
+        playSoundEffect("/sound/100pt.mp3")
+      }
       setTotalPoints((prev) => prev + pointsToAdd)
     } else {
+      playSoundEffect("/sound/gamefinish.mp3")
       setGameState("result")
     }
   }
 
   const handleEndQuiz = () => {
     // 現在の回答を保存してからサマリーページ（価値観選択）へ移行
+    playSoundEffect("/sound/gamefinish.mp3")
     const currentAnswers = userAnswers.filter((answer) => answer.trim() !== "")
     if (currentAnswers.length > 0) {
       setAllUserAnswers((prev) => [...prev, currentAnswers])
@@ -1779,6 +2200,7 @@ const QuizGame = () => {
   }
 
   const handleTimeUp = () => {
+    playSoundEffect("/sound/timeup.mp3")
     setTotalPoints((prev) => prev - 50)
   }
 
@@ -1799,16 +2221,19 @@ const QuizGame = () => {
 
   // 価値観選択から行動プランページへ進む
   const handleContinueToAction = () => {
+    playSoundEffect("/sound/300ptnextpage.mp3")
     setGameState("action")
   }
 
   // フィールド完了時に100pt追加
   const handleFieldComplete = () => {
+    playSoundEffect("/sound/100pt.mp3")
     setTotalPoints((prev) => prev + 100)
   }
 
   // 行動プランの追加ハンドラー（3回に1回は900pt、それ以外は600pt）
   const handleActionPlanAdd = (when: string, action: string, motivation: string) => {
+    playSoundEffect("/sound/100pt.mp3")
     setActionPlans((prev) => [...prev, { when, action, motivation }])
     const isGolden = (actionPlans.length + 1) % 3 === 0
     setTotalPoints((prev) => prev + (isGolden ? 900 : 600))
@@ -1816,10 +2241,12 @@ const QuizGame = () => {
 
   // 行動プランから最終ページへ
   const handleActionComplete = () => {
+    playSoundEffect("/sound/gamefinish.mp3")
     setGameState("result")
   }
 
   const handleRestart = () => {
+    playSoundEffect("/sound/replay.mp3")
     setGameState("intro")
     setCurrentQuiz(0)
     setUserAnswers([""])
@@ -1829,15 +2256,33 @@ const QuizGame = () => {
     setImprovementRating(5)
     setSelectedAnswers([])
     setActionPlans([])
+    setHasSubmittedGameData(false)
+    // session_idを新規生成
+    setSessionId(crypto.randomUUID())
   }
 
   const handleExit = () => {
     router.push("/")
   }
 
+  const handleStart = () => {
+    playSoundEffect("/sound/gamestart.mp3")
+    setGameState("prestart")
+  }
+
   return (
     <AnimatePresence mode="wait">
-      {gameState === "intro" && <IntroPage key="intro" onStart={() => setGameState("quiz")} />}
+      {gameState === "intro" && <IntroPage key="intro" onStart={handleStart} isMuted={isMuted} setIsMuted={setIsMuted} />}
+      {gameState === "prestart" && (
+        <PrestartPage
+          key="prestart"
+          gender={gender}
+          setGender={setGender}
+          ageGroup={ageGroup}
+          setAgeGroup={setAgeGroup}
+          onContinue={() => setGameState("quiz")}
+        />
+      )}
       {gameState === "quiz" && (
         <QuizPage
           key="quiz"
@@ -1850,6 +2295,12 @@ const QuizGame = () => {
           onEndQuiz={handleEndQuiz}
           onDirectToAffiliate={handleDirectToAffiliate}
           onTimeUp={handleTimeUp}
+          userId={userId}
+          sessionId={sessionId}
+          gender={gender}
+          ageGroup={ageGroup}
+          onSetHasSubmittedGameData={setHasSubmittedGameData}
+          playSoundEffect={playSoundEffect}
         />
       )}
       {gameState === "summary" && (
@@ -1884,6 +2335,18 @@ const QuizGame = () => {
           actionPlans={actionPlans}
           onRestart={handleRestart}
           onExit={handleExit}
+          gender={gender}
+          setGender={setGender}
+          ageGroup={ageGroup}
+          setAgeGroup={setAgeGroup}
+          enjoymentRating={enjoymentRating}
+          setEnjoymentRating={setEnjoymentRating}
+          improvementRating={improvementRating}
+          setImprovementRating={setImprovementRating}
+          userId={userId}
+          sessionId={sessionId}
+          hasSubmittedGameData={hasSubmittedGameData}
+          onSetHasSubmittedGameData={setHasSubmittedGameData}
         />
       )}
     </AnimatePresence>

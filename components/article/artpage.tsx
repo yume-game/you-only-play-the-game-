@@ -145,6 +145,7 @@ export default function GalleryPage() {
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed text-pretty">
             アートには心を癒し、希望を与える力があります。
             <span className="block mt-2">ゆっくりと時間をかけて、それぞれの作品と向き合ってください。</span>
+            <span className="block mt-2 text-forest-600 font-medium">IQが高い人はアートなど芸術好きみたいですね</span>
           </p>
         </div>
 
