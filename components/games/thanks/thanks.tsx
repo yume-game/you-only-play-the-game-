@@ -4,24 +4,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { createClient } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import ConfettiCanvas from "@/components/animations/ConfettiCanvas"
 import DarkAnimationCanvas from "@/components/animations/DarkAnimationCanvas"
 import ButtonAnimationCanvas from "@/components/animations/ButtonAnimationCanvas"
 import TransitionCanvas from "@/components/animations/TransitionCanvas"
-import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { thanksTranslations, type ThanksTranslationKey } from "@/locales/thanks-translations"
+import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
 
-// Supabaseクライアントの設定（Selfworth用プロジェクト）
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
-
-
-// const supabase = createClientComponentClient()
 
 // デバイス判定のカスタムフック
 const useIsMobile = () => {
@@ -385,7 +376,6 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
   const [isMobile, setIsMobile] = useState(false)
   const [allImages, setAllImages] = useState<string[]>([])
   const [isTermsOpen, setIsTermsOpen] = useState(false)
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   // ページマウント時に上までスクロール
   useEffect(() => {
@@ -412,6 +402,7 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
 
   return (
     <div className="relative w-full h-screen flex flex-col items-center justify-center animate-fade-in">
+      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
       <div className="absolute inset-0 z-0">
         <Image
           src="/image/background-bright-forest-road.png"
@@ -464,37 +455,19 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
           <div className="text-white text-lg">{t("intro_checking_device")}</div>
         ) : (
           <>
-            {/* 利用規約セクション */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-center space-x-3">
-                <button
-                  onClick={() => setIsTermsOpen(true)}
-                  className="text-white underline hover:text-green-200 transition-colors"
-                >
-                  {t("intro_terms")}
-                </button>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="w-8 h-8 rounded-full border-2 border-white cursor-pointer transition-all duration-300 hover:scale-125 hover:border-green-300 checked:scale-110 checked:bg-green-400"
-                  />
-                  <span className="text-white">{t("intro_agree")}</span>
-                </label>
-              </div>
+            {/* 注意書き */}
+            <p className="text-red-300 text-sm text-center mb-4">
+              重度のトラウマなどお持ちの方は私のゲームではなく、精神科医にかかる事を推奨いたします
+            </p>
 
-              {/* 注意書き */}
-              <p className="text-red-300 text-sm text-center mb-4">
-                重度のトラウマなどお持ちの方は私のゲームではなく、精神科医にかかる事を推奨いたします
+            <div className="space-y-4">
+              <p className="text-white/70 text-sm text-center">
+                スタートボタンをおすと、<button type="button" onClick={() => setIsTermsOpen(true)} className="text-green-300 underline hover:text-green-200 font-medium">利用規約</button>に同意したことになります。
               </p>
 
               <Button
                 onClick={onStart}
-                disabled={!agreedToTerms}
-                className={`bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white ${
-                  !agreedToTerms ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className="bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white"
               >
                 {t("intro_start")}
               </Button>
@@ -502,9 +475,6 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
           </>
         )}
       </div>
-
-      {/* 利用規約ポップアップ */}
-      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
 
       {/* 初期画像のみプリロード */}
       <div className="absolute -top-full opacity-0 pointer-events-none">
@@ -1248,29 +1218,26 @@ const ResultPage = ({
     if (hasSubmittedGameData) return
 
     const saveGameData = async () => {
-      if (!supabase) return
-
       try {
-        const { error } = await supabase.from("thanks_responses").insert({
-          user_id: userId,
-          session_id: sessionId,
-          total_points: totalPoints,
-          selected_values: selectedAnswers,
-          action_plans: actionPlans.map(plan => plan.action).filter(action => action.trim() !== ""),
-          gender: gender,
-          age_group: ageGroup,
-          enjoyment_rating: null,
-          improvement_rating: null,
+        await fetch("/api/responses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            table: "thanks_responses",
+            user_id: userId,
+            session_id: sessionId,
+            total_points: totalPoints,
+            selected_values: selectedAnswers,
+            action_plans: actionPlans.map(plan => plan.action).filter(action => action.trim() !== ""),
+            gender: gender,
+            age_group: ageGroup,
+            enjoyment_rating: null,
+            improvement_rating: null,
+          }),
         })
-
-        if (error) {
-          console.error("ゲームデータの自動保存に失敗:", error)
-        } else {
-          console.log("ゲームデータが自動保存されました")
-          onSetHasSubmittedGameData(true)
-        }
-      } catch (err) {
-        console.error("データ保存中にエラーが発生:", err)
+        onSetHasSubmittedGameData(true)
+      } catch {
+        console.error("ゲームデータの自動保存に失敗")
       }
     }
 
@@ -1283,32 +1250,23 @@ const ResultPage = ({
 
     setIsSubmitting(true)
 
-    if (supabase) {
-      try {
-        const { error: affiliateError } = await supabase.from("affiliate_clicks").insert({
-          user_id: userId,
-          session_id: sessionId,
-          game_name: "thanks",
-          gender: gender || null,
-          age_group: ageGroup || null,
-          enjoyment_rating: enjoymentRating,
-          improvement_rating: improvementRating,
-          affiliate_clicked: false,
-          affiliate_pattern_index: affiliatePatternIndex,
-        })
+    await fetch("/api/affiliate-click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        game_name: "thanks",
+        user_id: userId,
+        session_id: sessionId,
+        gender: gender || null,
+        age_group: ageGroup || null,
+        enjoyment_rating: enjoymentRating,
+        improvement_rating: improvementRating,
+        affiliate_clicked: false,
+        affiliate_pattern_index: affiliatePatternIndex,
+      }),
+    })
 
-        if (affiliateError) {
-          console.error("アンケートデータの保存に失敗:", affiliateError)
-        } else {
-          console.log("アンケートデータが保存されました")
-        }
-
-        setHasSubmitted(true)
-      } catch (err) {
-        console.error("データ保存中にエラーが発生:", err)
-      }
-    }
-
+    setHasSubmitted(true)
     setIsSubmitting(false)
   }
 
@@ -1328,44 +1286,29 @@ const ResultPage = ({
       const shouldRedirect = true
       const redirectUrl = clickData?.url
 
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH) {
-        console.log("Supabase環境変数が設定されていないため、データ保存をスキップします")
-        setHasSubmitted(true)
-        setIsSubmitting(false)
-
-        if (shouldRedirect && redirectUrl) {
-          setTimeout(() => {
-            window.open(redirectUrl, "_blank")
-          }, 200)
-        }
-      } else {
-        supabase!.from("affiliate_clicks").insert({
+      fetch("/api/affiliate-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game_name: "thanks",
           user_id: userId,
           session_id: sessionId,
-          game_name: "thanks",
           gender: gender || null,
           age_group: ageGroup || null,
           enjoyment_rating: enjoymentRating,
           improvement_rating: improvementRating,
           affiliate_clicked: true,
           affiliate_pattern_index: affiliatePatternIndex,
-        }).then(({ error }) => {
-          if (error) {
-            console.error("アフィリエイトクリックの記録に失敗:", error)
-          } else {
-            console.log("アフィリエイトクリックが記録されました")
-          }
-
-          setHasSubmitted(true)
-          setIsSubmitting(false)
-
-          if (shouldRedirect && redirectUrl) {
-            setTimeout(() => {
-              window.open(redirectUrl, "_blank")
-            }, 200)
-          }
-        })
-      }
+        }),
+      }).catch(() => {}).finally(() => {
+        setHasSubmitted(true)
+        setIsSubmitting(false)
+        if (shouldRedirect && redirectUrl) {
+          setTimeout(() => {
+            window.open(redirectUrl, "_blank")
+          }, 200)
+        }
+      })
     },
     [isSubmitting, hasSubmitted, userId, sessionId, gender, ageGroup, enjoymentRating, improvementRating, affiliatePatternIndex],
   )
@@ -1564,25 +1507,21 @@ const ResultPage = ({
                   affiliateTextPattern={affiliateTextPattern}
                   onAffiliateClick={() => {
                     console.log("アフィリエイトリンクがクリックされました")
-                    if (supabase) {
-                      supabase.from("affiliate_clicks").insert({
+                    fetch("/api/affiliate-click", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        game_name: "thanks",
                         user_id: userId,
                         session_id: sessionId,
-                        game_name: "thanks",
                         gender: gender || null,
                         age_group: ageGroup || null,
                         enjoyment_rating: enjoymentRating,
                         improvement_rating: improvementRating,
                         affiliate_clicked: true,
                         affiliate_pattern_index: affiliatePatternIndex,
-                      }).then(({ error }) => {
-                        if (error) {
-                          console.error("アフィリエイトクリックの記録に失敗:", error)
-                        } else {
-                          console.log("アフィリエイトクリックが記録されました")
-                        }
-                      })
-                    }
+                      }),
+                    }).catch(() => {})
                   }}
                 />
               </div>
@@ -1651,7 +1590,23 @@ const QuizGame = () => {
       }
     }
 
+    // タブの可視性変更時にBGMを制御
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (bgmRef.current) {
+          bgmRef.current.pause()
+        }
+      } else {
+        if (shouldPlayBgm && !isMuted && bgmRef.current) {
+          bgmRef.current.play().catch(console.error)
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
       if (bgmRef.current) {
         bgmRef.current.pause()
       }

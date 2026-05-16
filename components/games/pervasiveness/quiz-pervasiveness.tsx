@@ -11,20 +11,7 @@ import { Slider } from "@/components/ui/slider"
 import Image from "next/image"
 import { motion, useAnimation, AnimatePresence } from "framer-motion"
 import { Leaf, Wind, Target, Clock, Plus, ArrowRight, Star, Award, Diamond } from "lucide-react"
-import { createClient } from "@supabase/supabase-js"
 import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
-
-// Supabaseクライアントの設定（Pervasiveness用プロジェクト）
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_PERVASIVENESS
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PERVASIVENESS
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
-
-const isSupabaseConfigured =
-  typeof process.env.NEXT_PUBLIC_SUPABASE_URL_PERVASIVENESS === "string" &&
-  process.env.NEXT_PUBLIC_SUPABASE_URL_PERVASIVENESS.length > 0 &&
-  typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PERVASIVENESS === "string" &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PERVASIVENESS.length > 0
 
 type Quiz = {
   question: string
@@ -301,7 +288,6 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
 
 const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMuted: boolean; setIsMuted: (value: boolean) => void }) => {
   const [isTermsOpen, setIsTermsOpen] = useState(false)
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   return (
     <motion.div
@@ -311,6 +297,7 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
       transition={{ duration: 0.5 }}
       className="relative w-full h-screen flex flex-col items-center justify-center"
     >
+      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
       <div className="absolute inset-0 z-0">
         <Image
           src="/image/background-bright-forest-road.png?height=1080&width=1920"
@@ -343,40 +330,19 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
           </button>
         </div>
 
-        {/* 利用規約セクション */}
         <div className="space-y-4">
-          <div className="flex items-center justify-center space-x-3">
-            <button
-              onClick={() => setIsTermsOpen(true)}
-              className="text-white underline hover:text-green-200 transition-colors"
-            >
-              利用規約
-            </button>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="w-8 h-8 rounded border-2 border-white cursor-pointer transition-all duration-300 hover:scale-125 hover:border-green-300 checked:scale-110 checked:bg-green-400"
-              />
-              <span className="text-white">同意する</span>
-            </label>
-          </div>
+          <p className="text-white/70 text-sm text-center">
+            スタートボタンをおすと、<button type="button" onClick={() => setIsTermsOpen(true)} className="text-green-300 underline hover:text-green-200 font-medium">利用規約</button>に同意したことになります。
+          </p>
 
           <Button
             onClick={onStart}
-            disabled={!agreedToTerms}
-            className={`bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white ${
-              !agreedToTerms ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className="bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white"
           >
             スタート
           </Button>
         </div>
       </div>
-
-      {/* 利用規約ポップアップ */}
-      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </motion.div>
   )
 }
@@ -1225,74 +1191,29 @@ const ResultPage = ({
       const shouldRedirect = true
       const redirectUrl = clickData?.url
 
-      if (!supabase || !isSupabaseConfigured) {
-        console.log("Supabase環境変数が設定されていないため、アフィリエイトデータ保存をスキップします")
+      // APIルート経由でアフィリエイトクリックデータを送信
+      fetch("/api/affiliate-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game_name: "pervasiveness",
+          affiliate_clicked: true,
+          affiliate_pattern_index: affiliatePatternIndex,
+        }),
+      }).catch(() => {
+        console.error("アフィリエイトデータの保存に失敗しました")
+      }).finally(() => {
         setHasSubmitted(true)
         setIsSubmitting(false)
-        
+
         if (shouldRedirect && redirectUrl) {
           setTimeout(() => {
             window.open(redirectUrl, "_blank")
           }, 200)
         }
-      } else {
-        // 既存のレコードを更新（アフィリエイト情報のみ追加）
-        const responseId = localStorage.getItem('quiz_response_id')
-        
-        if (responseId) {
-          // 既存レコードを更新
-          supabase.from("pervasiveness_responses_v2").update({
-            affiliate_pattern_index: affiliatePatternIndex,
-            affiliate_clicked: true,
-            affiliate_click_type: clickData?.clickType || "unknown",
-          }).eq('id', responseId).then(({ error }) => {
-            if (error) {
-              console.error("アフィリエイトデータの更新に失敗しました:", error)
-            } else {
-              console.log("アフィリエイトデータが正常に更新されました")
-            }
-            
-            setHasSubmitted(true)
-            setIsSubmitting(false)
-
-            // データ送信完了後（成功・失敗問わず）にアフィリエイトリンクに遷移
-            if (shouldRedirect && redirectUrl) {
-              setTimeout(() => {
-                window.open(redirectUrl, "_blank")
-              }, 200)
-            }
-          })
-        } else {
-          console.warn("quiz_response_idが見つかりません。アフィリエイト情報のみで新規レコードを作成します")
-          // レスポンスIDがない場合は新規作成
-          supabase.from("pervasiveness_responses_v2").insert({
-            total_points: totalPoints || 0,
-            all_user_answers: allUserAnswers || [],
-            enjoyment_rating: 5, // デフォルト値
-            improvement_rating: 5, // デフォルト値
-            affiliate_pattern_index: affiliatePatternIndex,
-            affiliate_clicked: true,
-            affiliate_click_type: clickData?.clickType || "unknown",
-          }).then(({ error }) => {
-            if (error) {
-              console.error("アフィリエイトデータの保存に失敗しました:", error)
-            } else {
-              console.log("アフィリエイトデータが正常に保存されました")
-            }
-            
-            setHasSubmitted(true)
-            setIsSubmitting(false)
-
-            if (shouldRedirect && redirectUrl) {
-              setTimeout(() => {
-                window.open(redirectUrl, "_blank")
-              }, 200)
-            }
-          })
-        }
-      }
+      })
     },
-    [isSubmitting, hasSubmitted, totalPoints, affiliatePatternIndex, allUserAnswers],
+    [isSubmitting, hasSubmitted, affiliatePatternIndex],
   )
 
   
@@ -1510,7 +1431,23 @@ const QuizGame = () => {
       }
     }
 
+    // タブの可視性変更時にBGMを制御
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (bgmRef.current) {
+          bgmRef.current.pause()
+        }
+      } else {
+        if (shouldPlayBgm && !isMuted && bgmRef.current) {
+          bgmRef.current.play().catch(console.error)
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
       if (bgmRef.current) {
         bgmRef.current.pause()
       }
@@ -1628,31 +1565,20 @@ const QuizGame = () => {
 
       setTotalPoints(newTotalPoints)
 
-      // Supabaseに基本データを送信
-      if (supabase && isSupabaseConfigured) {
-        try {
-          const { data, error } = await supabase.from("pervasiveness_responses_v2").insert({
+      // APIルート経由でデータを送信
+      try {
+        await fetch("/api/pervasiveness-responses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             total_points: newTotalPoints,
             all_user_answers: allUserAnswers,
             enjoyment_rating: enjoyment,
             improvement_rating: mentalImprovement,
-            affiliate_clicked: false, // 初期値はfalse
-          }).select('id').single()
-          
-          if (error) {
-            console.error("データの保存に失敗しました:", error)
-          } else {
-            console.log("基本データが正常に保存されました", data)
-            // レスポンスIDを保存（アフィリエイトクリック時の更新用）
-            if (data?.id) {
-              localStorage.setItem('quiz_response_id', data.id.toString())
-            }
-          }
-        } catch (error) {
-          console.error("Supabaseへの送信中にエラーが発生しました:", error)
-        }
-      } else {
-        console.log("Supabase環境変数が設定されていないため、データ保存をスキップします")
+          }),
+        })
+      } catch {
+        console.error("Supabaseへの送信中にエラーが発生しました")
       }
 
       setGameState("result")

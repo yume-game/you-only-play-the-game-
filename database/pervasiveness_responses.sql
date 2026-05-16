@@ -48,8 +48,8 @@ Step 4: RLS設定（別々に実行）
 
 ALTER TABLE pervasiveness_responses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public insert" ON pervasiveness_responses FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public select" ON pervasiveness_responses FOR SELECT USING (true);
-CREATE POLICY "Allow public update" ON pervasiveness_responses FOR UPDATE USING (true);
+-- SELECTポリシーは付与しない。anon keyで全件読み取りを防ぐため。
+-- UPDATEポリシーも付与しない。アフィリエイトクリックはaffiliate_clicksテーブルへのINSERTで記録する。
 */
 
 /*

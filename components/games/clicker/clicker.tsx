@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Home, Smile, Clock, Sparkles, Frown, Trophy } from "lucide-react"
+import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
 
 type FallingItem = {
   id: number
@@ -29,33 +30,74 @@ type ClickAnimation = {
 }
 
 const GAME_DURATION = 60 // 初期制限時間60秒
-const MIDLINE_BONUS = 5000
 const MISS_PENALTY = -500
 
-const COPYWRITING = [
-  {
+// ランク別のコメント
+const RANK_COMMENTS = {
+  S: {
+    title: "伝説級のスコア！",
+    description: "あなたは真のマスターです！この記録を超えられる人はほとんどいないでしょう。",
+  },
+  A: {
     title: "素晴らしいスコアです！",
-    description: "あなたの反射神経は抜群です。もっと高得点を目指して、再挑戦してみませんか？",
-    cta: "今すぐもう一度プレイ！",
+    description: "あなたの反射神経は抜群です。Sランクまであと少し！",
   },
-  {
-    title: "お疲れ様でした！",
-    description: "楽しんでいただけましたか？友達にもシェアして、一緒に競い合いましょう！",
-    cta: "さらに楽しむ方法をチェック",
-  },
-  {
+  B: {
     title: "ナイスプレイ！",
-    description: "あなたのスキルは素晴らしい！次回はさらに高得点を狙ってみてください。",
-    cta: "もっと上達するコツを見る",
+    description: "なかなかの腕前です。練習すればもっと上を目指せます！",
   },
-]
+  C: {
+    title: "お疲れ様でした！",
+    description: "楽しんでいただけましたか？次回はもっと高得点を狙ってみましょう！",
+  },
+  D: {
+    title: "まずは練習あるのみ！",
+    description: "にこちゃんを素早くクリックするコツをつかもう。次回に期待！",
+  },
+}
+
+// AffiliateComponent（変更禁止）
+const AffiliateComponent = ({ className = "" }: { className?: string }) => {
+  const affiliateHtml = `<a href="https://px.a8.net/svt/ejp?a8mat=45167E+679KMQ+5OI8+5ZEMP" rel="nofollow">
+<img border="0" width="300" height="250" alt="" src="https://www27.a8.net/svt/bgt?aid=250317482375&wid=001&eno=01&mid=s00000026504001005000&mc=1"></a>
+<img border="0" width="1" height="1" src="https://www10.a8.net/0.gif?a8mat=45167E+679KMQ+5OI8+5ZEMP" alt="">`
+
+  return (
+    <div className={`w-full mx-auto mt-2 mb-2 ${className}`}>
+      <div
+        style={{
+          fontFamily: "'Hiragino Sans', 'Yu Gothic', sans-serif",
+          margin: 0,
+          padding: "10px",
+          backgroundColor: "#ffffffff",
+          color: "#333",
+          maxWidth: "600px",
+          marginLeft: "auto",
+          marginRight: "auto"
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: "20px"
+          }}
+          dangerouslySetInnerHTML={{ __html: affiliateHtml }}
+        />
+      </div>
+    </div>
+  )
+}
 
 // スタートページコンポーネント
 const StartPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMuted: boolean; setIsMuted: (value: boolean) => void }) => {
   const router = useRouter()
+  const [isTermsOpen, setIsTermsOpen] = useState(false)
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50">
+      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
       <Card className="max-w-2xl w-full p-8 md:p-12 shadow-2xl border-4 border-primary/20">
         <div className="text-center space-y-8">
           {/* タイトル */}
@@ -129,7 +171,7 @@ const StartPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
               </div>
               <div className="border-t-2 border-border pt-3 mt-3">
                 <p className="text-sm text-muted-foreground">
-                  ⚠️ 中間線を越えると<span className="font-bold">+5,000点</span>のボーナス！
+                  ⚠️ にこちゃんが中間線を越えると<span className="font-bold">5,000点</span>に減少！
                   <br />
                   ⚠️ 画面外に出ると<span className="font-bold">-500点</span>
                 </p>
@@ -138,13 +180,18 @@ const StartPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
           </div>
 
           {/* スタートボタン */}
-          <Button
-            size="lg"
-            onClick={onStart}
-            className="w-full text-2xl py-8 font-bold pulse-glow hover:scale-105 transition-transform"
-          >
-            ゲームスタート！
-          </Button>
+          <div className="text-center space-y-3">
+            <p className="text-muted-foreground text-sm">
+              スタートボタンをおすと、<button type="button" onClick={() => setIsTermsOpen(true)} className="text-primary underline hover:text-primary/80 font-medium">利用規約</button>に同意したことになります。
+            </p>
+            <Button
+              size="lg"
+              onClick={onStart}
+              className="w-full text-2xl py-8 font-bold pulse-glow hover:scale-105 transition-transform"
+            >
+              ゲームスタート！
+            </Button>
+          </div>
         </div>
       </Card>
     </div>
@@ -166,6 +213,7 @@ const GamePage = ({ onGameEnd, playSoundEffect }: { onGameEnd: (score: number) =
   const animationIdCounter = useRef(0)
   const spawnedTypes = useRef<Set<string>>(new Set())
   const gameStartTime = useRef<number>(0)
+  const scoreRef = useRef(0)
 
   // 難易度に応じた背景色
   const getBackgroundGradient = () => {
@@ -286,8 +334,14 @@ const GamePage = ({ onGameEnd, playSoundEffect }: { onGameEnd: (score: number) =
 
     switch (item.type) {
       case "happy":
-        points = 10000
-        text = "+10,000"
+        // 中間線を越えていたら5000点、越えていなければ10000点
+        if (item.crossedMidline) {
+          points = 5000
+          text = "+5,000"
+        } else {
+          points = 10000
+          text = "+10,000"
+        }
         color = "text-yellow-500"
         break
       case "angry":
@@ -374,10 +428,8 @@ const GamePage = ({ onGameEnd, playSoundEffect }: { onGameEnd: (score: number) =
           const sway = Math.sin(item.swayOffset + newY * item.swaySpeed) * swayAmplitude
           const prevSway = Math.sin(item.swayOffset + item.y * item.swaySpeed) * swayAmplitude
 
-          // 中間線を越えたかチェック
+          // 中間線を越えたかチェック（フラグを立てるのみ）
           if (!item.crossedMidline && newY > midlineY) {
-            setScore((s) => s + MIDLINE_BONUS)
-            addClickAnimation(rect.left + item.x + 40, rect.top + midlineY, "+5,000", "text-green-500")
             return {
               ...item,
               y: newY,
@@ -413,7 +465,7 @@ const GamePage = ({ onGameEnd, playSoundEffect }: { onGameEnd: (score: number) =
       setTimeLeft((prev) => {
         if (prev <= 1) {
           setGameOver(true)
-          onGameEnd(score)
+          onGameEnd(scoreRef.current)
           return 0
         }
         return prev - 1
@@ -421,7 +473,12 @@ const GamePage = ({ onGameEnd, playSoundEffect }: { onGameEnd: (score: number) =
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [gameStarted, gameOver, score, onGameEnd])
+  }, [gameStarted, gameOver, onGameEnd])
+
+  // scoreRefを同期
+  useEffect(() => {
+    scoreRef.current = score
+  }, [score])
 
   // 難易度アップ
   useEffect(() => {
@@ -476,9 +533,13 @@ const GamePage = ({ onGameEnd, playSoundEffect }: { onGameEnd: (score: number) =
 
         {/* ゲームエリア */}
         <Card className="relative overflow-hidden" style={{ height: "500px" }}>
-          <div ref={gameAreaRef} className="w-full h-full relative bg-gradient-to-b from-sky-100 to-sky-50">
+          <div ref={gameAreaRef} className="w-full h-full relative">
+            {/* 上半分の背景 */}
+            <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-sky-100 to-sky-50" />
+            {/* 下半分の背景（少しオレンジがかった色） */}
+            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-b from-orange-50 to-orange-100" />
             {/* 中間線 */}
-            <div className="absolute top-1/2 left-0 right-0 border-t-2 border-dashed border-primary/30 z-0" />
+            <div className="absolute top-1/2 left-0 right-0 border-t-2 border-dashed border-orange-400 z-0" />
 
             {/* 落下アイテム */}
             {fallingItems.map((item) => (
@@ -560,24 +621,49 @@ const GamePage = ({ onGameEnd, playSoundEffect }: { onGameEnd: (score: number) =
 }
 
 // リザルトページコンポーネント
-const ResultPage = ({ finalScore, onRestart, onExit }: { finalScore: number; onRestart: () => void; onExit: () => void }) => {
-  const [selectedCopy, setSelectedCopy] = useState(COPYWRITING[0])
-
-  useEffect(() => {
-    // ランダムにコピーライティングを選択
-    const randomIndex = Math.floor(Math.random() * COPYWRITING.length)
-    setSelectedCopy(COPYWRITING[randomIndex])
-  }, [])
+const ResultPage = ({ finalScore, onRestart, onExit, isMuted }: { finalScore: number; onRestart: () => void; onExit: () => void; isMuted: boolean }) => {
+  // スロットアニメーション用のstate
+  const [displayedScore, setDisplayedScore] = useState(0)
+  const [isSpinning, setIsSpinning] = useState(true)
+  const [showFinalResult, setShowFinalResult] = useState(false)
 
   const getRank = () => {
-    if (finalScore >= 500000) return { text: "S", color: "text-purple-500", bg: "bg-purple-100" }
-    if (finalScore >= 300000) return { text: "A", color: "text-blue-500", bg: "bg-blue-100" }
-    if (finalScore >= 150000) return { text: "B", color: "text-green-500", bg: "bg-green-100" }
-    if (finalScore >= 50000) return { text: "C", color: "text-yellow-500", bg: "bg-yellow-100" }
-    return { text: "D", color: "text-gray-500", bg: "bg-gray-100" }
+    if (finalScore >= 500000) return { text: "S" as const, color: "text-purple-500", bg: "bg-purple-100" }
+    if (finalScore >= 300000) return { text: "A" as const, color: "text-blue-500", bg: "bg-blue-100" }
+    if (finalScore >= 150000) return { text: "B" as const, color: "text-green-500", bg: "bg-green-100" }
+    if (finalScore >= 50000) return { text: "C" as const, color: "text-yellow-500", bg: "bg-yellow-100" }
+    return { text: "D" as const, color: "text-gray-500", bg: "bg-gray-100" }
   }
 
   const rank = getRank()
+  const rankComment = RANK_COMMENTS[rank.text]
+
+  // スロットアニメーション
+  useEffect(() => {
+    if (isSpinning) {
+      const interval = setInterval(() => {
+        setDisplayedScore(Math.floor(Math.random() * 1000000))
+      }, 50) // デュルルル - 50ms間隔で数字変更
+
+      const timeout = setTimeout(() => {
+        clearInterval(interval)
+        setIsSpinning(false)
+        setDisplayedScore(finalScore)
+        setShowFinalResult(true)
+        // ドン効果音
+        if (!isMuted) {
+          const audio = new Audio('/sound/point.mp3')
+          audio.volume = 0.6
+          audio.play().catch(() => {})
+        }
+      }, 2000)
+
+      return () => {
+        clearInterval(interval)
+        clearTimeout(timeout)
+      }
+    }
+  }, [isSpinning, finalScore, isMuted])
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50">
@@ -591,43 +677,37 @@ const ResultPage = ({ finalScore, onRestart, onExit }: { finalScore: number; onR
             <h1 className="text-4xl md:text-5xl font-bold text-primary">ゲーム終了！</h1>
           </div>
 
-          {/* スコア表示 */}
+          {/* スロットアニメーション付きスコア表示 */}
           <div className="space-y-4">
-            <div className={`inline-block px-8 py-4 rounded-2xl ${rank.bg}`}>
+            <div className={`text-5xl md:text-6xl font-bold transition-all duration-300 ${isSpinning ? 'text-gray-400 animate-pulse' : 'text-primary'}`}>
+              🏆 <span className={isSpinning ? 'blur-sm' : ''}>{displayedScore.toLocaleString()}</span>
+              <span className="text-2xl ml-2">点</span>
+            </div>
+            {showFinalResult && (
+              <div className="text-2xl font-bold text-orange-600 animate-bounce">
+                🎉 ドン！ 🎉
+              </div>
+            )}
+            <div className={`inline-block px-8 py-4 rounded-2xl ${rank.bg} ${!showFinalResult ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}>
               <div className="text-sm text-muted-foreground mb-2">ランク</div>
               <div className={`text-6xl font-bold ${rank.color}`}>{rank.text}</div>
             </div>
-            <div className="text-5xl md:text-6xl font-bold text-primary">
-              {finalScore.toLocaleString()}
-              <span className="text-2xl ml-2">点</span>
-            </div>
           </div>
 
-          {/* コピーライティング */}
-          <Card className="bg-gradient-to-br from-primary/10 to-accent/10 p-6 space-y-4">
-            <div className="flex items-center justify-center gap-2">
-              <Sparkles className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-primary">{selectedCopy.title}</h2>
-              <Sparkles className="w-6 h-6 text-primary" />
-            </div>
-            <p className="text-lg text-foreground leading-relaxed">{selectedCopy.description}</p>
-            <div
-              className="pt-4 border-t-2 border-border"
-              dangerouslySetInnerHTML={{
-                __html: `<a href="#" class="text-primary font-bold hover:underline text-lg">${selectedCopy.cta}</a>`,
-              }}
-            />
-          </Card>
+          {/* ランク別コメント */}
+          {showFinalResult && (
+            <Card className="bg-gradient-to-br from-primary/10 to-accent/10 p-6 space-y-4">
+              <div className="flex items-center justify-center gap-2">
+                <Sparkles className="w-6 h-6 text-primary" />
+                <h2 className="text-2xl font-bold text-primary">{rankComment.title}</h2>
+                <Sparkles className="w-6 h-6 text-primary" />
+              </div>
+              <p className="text-lg text-foreground leading-relaxed">{rankComment.description}</p>
+            </Card>
+          )}
 
           {/* アフィリエイトエリア */}
-          <Card className="bg-secondary/50 p-6">
-            <div
-              className="text-center text-sm text-muted-foreground"
-              dangerouslySetInnerHTML={{
-                __html: "<p>広告エリア - ここにアフィリエイトリンクが入ります</p>",
-              }}
-            />
-          </Card>
+          <AffiliateComponent />
 
           {/* ボタン */}
           <div className="flex flex-col sm:flex-row gap-4">
@@ -690,7 +770,23 @@ export default function ClickerGame() {
       }
     }
 
+    // タブの可視性変更時にBGMを制御
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (bgmRef.current) {
+          bgmRef.current.pause()
+        }
+      } else {
+        if (shouldPlayBgm && !isMuted && bgmRef.current) {
+          bgmRef.current.play().catch(console.error)
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
       if (bgmRef.current) {
         bgmRef.current.pause()
       }
@@ -722,7 +818,7 @@ export default function ClickerGame() {
     <>
       {gameState === "start" && <StartPage onStart={handleStart} isMuted={isMuted} setIsMuted={setIsMuted} />}
       {gameState === "game" && <GamePage onGameEnd={handleGameEnd} playSoundEffect={playSoundEffect} />}
-      {gameState === "result" && <ResultPage finalScore={finalScore} onRestart={handleRestart} onExit={handleExit} />}
+      {gameState === "result" && <ResultPage finalScore={finalScore} onRestart={handleRestart} onExit={handleExit} isMuted={isMuted} />}
     </>
   )
 }

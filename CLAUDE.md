@@ -63,4 +63,9 @@ Tailwind CSSを優先使用
 
 このコードに触れる必要がある場合は、**必ずユーザーに確認を取ること**。
 
+### 許可事項
+- `AffiliateComponent`を新しいページ・場所で呼び出すことは許可
+- コンポーネントのprops（`affiliateTextPattern`など）を渡して使用することは許可
+- 他のファイル（`desirediscovery.tsx`、`valuediscovery.tsx`など）で同様のAffiliateComponentを定義・使用することは許可
+
 

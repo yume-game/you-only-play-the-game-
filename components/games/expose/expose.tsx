@@ -5,19 +5,13 @@ import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { createClient } from "@supabase/supabase-js"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { exposeThemes, getThemeById, getDefaultTheme, type ExposeTheme } from "./expose-themes"
 import ConfettiCanvas from "@/components/animations/ConfettiCanvas"
 import DarkAnimationCanvas from "@/components/animations/DarkAnimationCanvas"
-import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { exposeTranslations, type TranslationKey } from "@/locales/expose-translations"
-
-// Supabaseクライアントの設定（Selfworth用プロジェクト）
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
+import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
 
 // 行動プランの型定義
 type ActionPlan = {
@@ -41,6 +35,312 @@ interface Leaf {
   swayOffset: number
   swaySpeed: number
 }
+
+// セリフデータの型定義
+type DialogueLine = {
+  icon: string           // 💡, 🪜 など
+  title: string          // 太字部分
+  content: string        // 本文
+  audioSrc?: string      // 任意の音声ファイルパス
+}
+
+// ポケモン風セリフボックスコンポーネント
+const DialogueBox = ({
+  lines,
+  onComplete,
+  catVideoSrc,
+  isMuted,
+  onExit,
+  title,
+  subtitle,
+}: {
+  lines: DialogueLine[]
+  onComplete: () => void
+  catVideoSrc: string
+  isMuted: boolean
+  onExit?: () => void
+  title: string
+  subtitle?: string
+}) => {
+  const [currentLineIndex, setCurrentLineIndex] = useState(0)
+  const [displayedText, setDisplayedText] = useState("")
+  const [isTyping, setIsTyping] = useState(true)
+  const [hasScrolled, setHasScrolled] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  // スクロール検知（コンテナ内のスクロールを監視）
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      if (container.scrollTop > 100) {
+        setHasScrolled(true)
+      }
+    }
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const currentLine = lines[currentLineIndex]
+  const fullText = currentLine ? `${currentLine.title}\n\n${currentLine.content}` : ""
+
+  // タイプライター効果
+  useEffect(() => {
+    if (!currentLine) return
+
+    setDisplayedText("")
+    setIsTyping(true)
+    let charIndex = 0
+
+    typingIntervalRef.current = setInterval(() => {
+      if (charIndex < fullText.length) {
+        setDisplayedText(fullText.slice(0, charIndex + 1))
+        charIndex++
+      } else {
+        setIsTyping(false)
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current)
+        }
+      }
+    }, 30)
+
+    return () => {
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current)
+      }
+    }
+  }, [currentLineIndex, fullText, currentLine])
+
+  // 音声再生
+  useEffect(() => {
+    if (!currentLine?.audioSrc || isMuted) return
+
+    // 前の音声を停止
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+
+    // 新しい音声を再生
+    audioRef.current = new Audio(currentLine.audioSrc)
+    audioRef.current.volume = 0.5
+    audioRef.current.play().catch(() => {})
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      }
+    }
+  }, [currentLineIndex, currentLine?.audioSrc, isMuted])
+
+  const handleClick = () => {
+    if (isTyping) {
+      // タイプライター中ならすべて表示
+      setDisplayedText(fullText)
+      setIsTyping(false)
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current)
+      }
+    } else {
+      // 次のセリフへ
+      if (currentLineIndex < lines.length - 1) {
+        // 音声を停止
+        if (audioRef.current) {
+          audioRef.current.pause()
+          audioRef.current.currentTime = 0
+        }
+        setCurrentLineIndex(prev => prev + 1)
+      } else {
+        // 完了
+        if (audioRef.current) {
+          audioRef.current.pause()
+        }
+        onComplete()
+      }
+    }
+  }
+
+  if (!currentLine) return null
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full h-screen flex flex-col items-center p-6 animate-fade-in overflow-y-auto"
+      style={{ background: "#f5f7f2" }}
+    >
+      <div className="w-full max-w-2xl space-y-6 pb-20">
+        {/* タイトル */}
+        <div className="text-center py-4">
+          <p className="text-xs tracking-widest text-green-600 uppercase mb-2 opacity-80">
+            {subtitle || "Exposure Therapy"}
+          </p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 leading-tight" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
+            {title}
+          </h1>
+
+          {/* 進行インジケーター */}
+          <div className="flex justify-center gap-2 mt-3">
+            {lines.map((_, index) => (
+              <div
+                key={index}
+                className={`w-3 h-3 rounded-full transition-all ${
+                  index === currentLineIndex ? "bg-green-500 w-6" : index < currentLineIndex ? "bg-green-400" : "bg-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* 猫動画 */}
+          <div className="flex justify-center mt-4">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-green-400 shadow-lg">
+              <video
+                src={catVideoSrc}
+                className="w-full h-full object-cover"
+                muted
+                playsInline
+                preload="metadata"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* セリフボックス */}
+        <div
+          onClick={handleClick}
+          className="cursor-pointer bg-white rounded-2xl p-6 shadow-lg border-4 border-green-400 relative overflow-hidden transition-transform hover:scale-[1.01] active:scale-[0.99]"
+          style={{
+            background: "linear-gradient(to bottom, #ffffff, #f0fdf4)",
+            boxShadow: "inset 0 0 0 2px #fff, 0 4px 20px rgba(0,0,0,0.1)"
+          }}
+        >
+          {/* 上部グラデーションバー */}
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-500 to-green-400" />
+
+          {/* アイコンとテキスト */}
+          <div className="flex gap-4 items-start pt-2">
+            <div className="text-4xl flex-shrink-0">
+              {currentLine.icon}
+            </div>
+            <div className="flex-1 min-h-[120px]">
+              <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
+                {displayedText}
+              </p>
+            </div>
+          </div>
+
+          {/* クリックインジケーター */}
+          <div className="absolute bottom-4 right-4">
+            <span
+              className={`text-green-500 text-2xl ${!isTyping ? "animate-pulse" : "opacity-30"}`}
+            >
+              ▼
+            </span>
+          </div>
+        </div>
+
+        {/* 進行状況テキスト */}
+        <p className="text-center text-sm text-gray-500">
+          {currentLineIndex + 1} / {lines.length}
+        </p>
+
+        {/* 終了ボタン - スクロール後に表示 */}
+        {onExit && hasScrolled && (
+          <div className="text-center animate-fade-in">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onExit()
+              }}
+              className="text-gray-500 hover:text-gray-700 underline text-sm"
+            >
+              終了する
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// エクスポージャー説明用セリフデータ
+const exposureExplanationLines: DialogueLine[] = [
+  // Page 0
+  {
+    icon: "💡",
+    title: "安全であるのに怖いものに向き合い、脳にこれは危険じゃないと学習させること",
+    content: "エクスポージャーとは、まず、不快感を思い出すこと。それに対して考えないようにしたりせず、苦しみを感じて、安全を感じることで、脳に「あ、これ危険だと思って不快感出してたけど、あんまり危険じゃないかも」と再学習させることで、脳は次の機会には不快感を出さないようになるというもの。"
+  },
+  {
+    icon: "🪜",
+    title: "怖さを10段階に分けて、簡単なものからやってみる",
+    content: "いきなり一番怖いものに向き合う必要はない。怖さのレベルを1〜10に分け、低いレベルから順番に向き合っていく。各段階で不安が十分に落ち着いてから次に進む。"
+  },
+  // Page 1
+  {
+    icon: "1️⃣",
+    title: "脳の学習能力を用いているから",
+    content: "怖いトリガーに繰り返しさらされ、何も悪いことが起きない体験を積むと、脳がトリガーへの恐怖反応を徐々に弱めていく（これを「消去」という）。"
+  },
+  {
+    icon: "2️⃣",
+    title: "逃げるという、さらに不快感が大きくなる行動ではないから",
+    content: "回避をやめることで、脳は初めて「逃げなくても大丈夫だった」という事実に触れられる。逃げ続ける限り、この学習の機会は永遠に生まれない。"
+  },
+  {
+    icon: "3️⃣",
+    title: "エクスポージャー中、不安はピークを越えると、自然に落ち着く",
+    content: "人間の不安反応は、向き合い続ければ必ず徐々に減っていくことがわかっている。「ずっとこの不快感が続く」は脳の勘違いで、実際には時間とともに落ち着く。"
+  },
+  // Page 2
+  {
+    icon: "💖",
+    title: "逃げは、いい戦略ではなかったことを意識",
+    content: "怖いものから逃げると一時的に楽になる。しかし脳の危険なものに対しては逃げようとなったままであること。不快感から逃げないことが、危険じゃないものであると再学習する機会である。"
+  },
+  {
+    icon: "💖",
+    title: "不安は「誤作動した警報」である",
+    content: "本来、不安は危険から身を守るために必要なもの。しかし今あなたが感じている不安は、実際には危険でないものに対して鳴り続けている誤作動した警報。エクスポージャーはその警報をリセットする作業だ。"
+  },
+  {
+    icon: "💖",
+    title: "不快感とその安全な結果のセットは脳に学習の機会を与え、不快じゃなくする方法である。",
+    content: "エクスポージャー中の不快感は効いているサイン。向き合い続けることで、脳が安全な結果を学習し落ち着いていく。この体験を繰り返すことが、脳の再学習につながる。"
+  }
+]
+
+// 音声エクスポージャー説明用セリフデータ
+const imaginationExplanationLines: DialogueLine[] = [
+  {
+    icon: "🎯",
+    title: "恐れている言葉を声に出す",
+    content: "先ほど入力した恐れている状況で、言われそうな言葉を声に出して繰り返します。自分で言うことで、言葉の力を弱めていきます。"
+  },
+  {
+    icon: "💪",
+    title: "不快感から逃げない",
+    content: "声に出している間に不快感を感じても、止めたり、逃げたりしないでください。不快感を全身で感じることが大切です。"
+  },
+  {
+    icon: "✅",
+    title: "不快感は効いているサイン",
+    content: "向き合い続けることで、脳が学習し落ち着いていきます。不快感を感じるのは、エクスポージャーが正しく機能している証拠です。"
+  },
+  {
+    icon: "✅",
+    title: "ピークを越えると落ち着く",
+    content: "不快感は必ず自然に減っていきます。「ずっと続く」と感じても、それは脳の勘違いです。"
+  },
+  {
+    icon: "⚠️",
+    title: "本当に危険なものには行わない",
+    content: "安全な範囲で行ってください。実際に危険な状況に対しては、エクスポージャーを行わないでください。"
+  }
+]
 
 // 効果音再生用のカスタムフック
 const useInteractionSounds = (isMuted: boolean) => {
@@ -363,12 +663,11 @@ const LoadingPage = ({ onLoadComplete }: { onLoadComplete: () => void }) => {
   )
 }
 
-const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMuted: boolean; setIsMuted: (value: boolean) => void }) => {
-  const [isTermsOpen, setIsTermsOpen] = useState(false)
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
+const IntroPage = ({ onStart, isMuted, setIsMuted, theme }: { onStart: () => void; isMuted: boolean; setIsMuted: (value: boolean) => void; theme: ExposeTheme }) => {
   const { language } = useLanguage()
   const t = (key: TranslationKey) => exposeTranslations[language][key]
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [isTermsOpen, setIsTermsOpen] = useState(false)
 
   // 効果音再生
   const playSound = useCallback((soundFile: string) => {
@@ -388,6 +687,7 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
 
   return (
     <div className="relative w-full min-h-screen flex flex-col items-center justify-start md:justify-center animate-fade-in overflow-y-auto py-4 md:py-0">
+      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
       {/* 背景画像 - PC版 */}
       <div className="absolute inset-0 z-0 hidden md:block">
         <Image
@@ -410,10 +710,25 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
       </div>
 
       <div className="relative z-10 text-center space-y-4 md:space-y-6 bg-green-700 bg-opacity-70 p-4 md:p-8 rounded-lg max-w-2xl mx-4 my-4 md:my-0">
-        <h1 className="text-4xl font-bold text-white">{t("intro_title")}</h1>
+        {/* テーマのアイコンと名前 */}
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <span className="text-5xl">{theme.icon}</span>
+        </div>
+        <h1 className="text-4xl font-bold text-white">
+          {theme.id !== "general" ? `${theme.name}の克服` : t("intro_title")}
+        </h1>
         <p className="text-lg text-white whitespace-pre-line">
-          {t("intro_subtitle")}{"\n"}
-          {t("intro_description")}
+          {theme.id !== "general" ? (
+            <>
+              {theme.description}{"\n"}
+              {theme.introText}
+            </>
+          ) : (
+            <>
+              {t("intro_subtitle")}{"\n"}
+              {t("intro_description")}
+            </>
+          )}
         </p>
         <p className="text-base text-red-300 font-bold">
           {t("intro_warning")}
@@ -442,29 +757,14 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
           ※BGMがふざけているのは、感情を真剣にとらえないことで、不快感に向き合いやすくするためであります。
         </p>
 
-        {/* 利用規約セクション */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-center space-x-3">
-            <button
-              onClick={() => setIsTermsOpen(true)}
-              className="text-white underline hover:text-green-200 transition-colors"
-            >
-              {t("intro_terms")}
-            </button>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="w-8 h-8 rounded-full border-2 border-white cursor-pointer transition-all duration-300 hover:scale-125 hover:border-green-300 checked:scale-110 checked:bg-green-400"
-              />
-              <span className="text-white">{t("intro_agree")}</span>
-            </label>
-          </div>
+        {/* 注意書き */}
+        <p className="text-red-300 text-sm text-center mb-4">
+          重度のトラウマなどお持ちの方は私のゲームではなく、精神科医にかかる事を推奨いたします
+        </p>
 
-          {/* 注意書き */}
-          <p className="text-red-300 text-sm text-center mb-4">
-            重度のトラウマなどお持ちの方は私のゲームではなく、精神科医にかかる事を推奨いたします
+        <div className="space-y-4">
+          <p className="text-white/70 text-sm text-center">
+            スタートボタンをおすと、<button type="button" onClick={() => setIsTermsOpen(true)} className="text-green-300 underline hover:text-green-200 font-medium">利用規約</button>に同意したことになります。
           </p>
 
           <Button
@@ -472,18 +772,12 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
               playSound('/sound/nextpage.mp3')
               onStart()
             }}
-            disabled={!agreedToTerms}
-            className={`bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white ${
-              !agreedToTerms ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className="bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white"
           >
             {t("intro_start")}
           </Button>
         </div>
       </div>
-
-      {/* 利用規約ポップアップ */}
-      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </div>
   )
 }
@@ -518,7 +812,6 @@ const ExposureQuizPage = ({
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [showResult, setShowResult] = useState(false)
   const [showPointAnimation, setShowPointAnimation] = useState(false)
-  const [explainPage, setExplainPage] = useState(0) // 説明ページ（0, 1, 2）
   const [wrongAnswers, setWrongAnswers] = useState<number[]>([]) // 間違えた問題のインデックス
   const audioRef = useRef<HTMLAudioElement | null>(null)
   // 連続正解とキャラクター用のstate
@@ -670,297 +963,24 @@ const ExposureQuizPage = ({
   }
 
   // 説明カード表示（クイズ開始前）- 3ページに分割
+  // セリフ形式の説明表示（クイズ開始前）
   if (!quizStarted) {
     return (
-      <div className="relative w-full min-h-screen flex flex-col items-center p-6 animate-fade-in overflow-y-auto"
-        style={{ background: "#f5f7f2" }}>
-        <div className="w-full max-w-2xl space-y-6 pb-20">
-          {/* タイトル */}
-          <div className="text-center py-4">
-            <p className="text-xs tracking-widest text-green-600 uppercase mb-2 opacity-80">Exposure Therapy</p>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 leading-tight" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-              🌿 エクスポージャー理解チェック
-            </h1>
-            <p className="text-gray-500 text-sm mt-1">大切なポイントを確認しよう</p>
-            {/* ページインジケーター */}
-            <div className="flex justify-center gap-2 mt-3">
-              {[0, 1, 2].map((page) => (
-                <div
-                  key={page}
-                  className={`w-3 h-3 rounded-full transition-all ${
-                    page === explainPage ? "bg-green-500 w-6" : "bg-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* 猫の画像（静止） */}
-            <div className="flex justify-center mt-4">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-green-400 shadow-lg">
-                <video
-                  src={explainCatVideo}
-                  className="w-full h-full object-cover"
-                  muted
-                  playsInline
-                  preload="metadata"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ページ1: エクスポージャーとは何か？ */}
-          {explainPage === 0 && (
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-            >
-              {/* クイズ点数の説明 */}
-              <div className="bg-yellow-50 rounded-xl p-4 mb-6 border-2 border-yellow-300">
-                <p className="text-yellow-800 font-bold text-center">
-                  📝 この内容のクイズも点数になるよ！しっかり読んでね
-                </p>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 shadow-lg border-4 border-green-400 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-500 to-green-400" />
-                <h2 className="text-green-600 text-lg font-bold mb-4 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-                  <span>🌿</span> エクスポージャーとは何か？
-                </h2>
-                <div className="space-y-5">
-                  <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                    <span className="text-3xl">💡</span>
-                    <div>
-                      <motion.p
-                        className="font-bold text-base text-gray-800 mb-2"
-                        animate={{ rotate: [-0.5, 0.5, -0.5] }}
-                        transition={{ duration: 0.3, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        安全であるのに怖いものに向き合い、脳にこれは危険じゃないと学習させること
-                      </motion.p>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        エクスポージャーとは、まず、不快感を思い出すこと。それに対して
-                        <span className="text-green-600 font-semibold">考えないようにしたりせず、苦しみを感じて、安全を感じる</span>ことで、
-                        脳に「あ、これ危険だと思って不快感出してたけど、あんまり危険じゃないかも」と再学習させることで、脳は次の機会には不快感を出さないようになるというもの。
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                    <span className="text-3xl">🪜</span>
-                    <div>
-                      <motion.p
-                        className="font-bold text-base text-gray-800 mb-2"
-                        animate={{ rotate: [-0.5, 0.5, -0.5] }}
-                        transition={{ duration: 0.3, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        怖さを10段階に分けて、簡単なものからやってみる
-                      </motion.p>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        いきなり一番怖いものに向き合う必要はない。怖さのレベルを1〜10に分け、
-                        <span className="text-green-600 font-semibold">低いレベルから順番に</span>向き合っていく。
-                        各段階で不安が十分に落ち着いてから次に進む。
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ページ2: なぜエクスポージャーは効果的なのか？ */}
-          {explainPage === 1 && (
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-            >
-              <div className="bg-white rounded-2xl p-6 shadow-lg border-4 border-green-400 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-500 to-green-400" />
-                <h2 className="text-green-600 font-bold text-lg mb-4 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-                  <span>💖</span> なぜエクスポージャーは効果的なのか？
-                </h2>
-                <div className="space-y-4">
-                  <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                    <div className="w-8 h-8 min-w-[32px] bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-sm font-bold text-white">1</div>
-                    <div>
-                      <motion.p
-                        className="font-bold text-base text-gray-800 mb-2"
-                        animate={{ rotate: [-0.5, 0.5, -0.5] }}
-                        transition={{ duration: 0.3, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        脳の学習能力を用いているから
-                      </motion.p>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        怖いトリガーに繰り返しさらされ、何も悪いことが起きない体験を積むと、
-                        <span className="text-green-600 font-semibold">脳がトリガーへの恐怖反応を徐々に弱めていく</span>（これを「消去」という）。
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                    <div className="w-8 h-8 min-w-[32px] bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-sm font-bold text-white">2</div>
-                    <div>
-                      <motion.p
-                        className="font-bold text-base text-gray-800 mb-2"
-                        animate={{ rotate: [-0.5, 0.5, -0.5] }}
-                        transition={{ duration: 0.3, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        逃げるという、さらに不快感が大きくなる行動ではないから
-                      </motion.p>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        回避をやめることで、脳は初めて<span className="text-green-600 font-semibold">「逃げなくても大丈夫だった」</span>という事実に触れられる。
-                        逃げ続ける限り、<span className="text-green-600 font-semibold">この学習の機会は永遠に生まれない。</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                    <div className="w-8 h-8 min-w-[32px] bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-sm font-bold text-white">3</div>
-                    <div>
-                      <motion.p
-                        className="font-bold text-base text-gray-800 mb-2"
-                        animate={{ rotate: [-0.5, 0.5, -0.5] }}
-                        transition={{ duration: 0.3, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        エクスポージャー中、不安はピークを越えると、自然に落ち着く
-                      </motion.p>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        人間の不安反応は、向き合い続ければ<span className="text-green-600 font-semibold">必ず徐々に減っていく</span>ことがわかっている。
-                        「ずっとこの不快感が続く」は脳の勘違いで、実際には時間とともに落ち着く。
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ページ3: 治療前に知ってほしいこと */}
-          {explainPage === 2 && (
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-            >
-              <div className="bg-white rounded-2xl p-6 shadow-lg border-4 border-green-400 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-500 to-green-400" />
-                <h2 className="text-green-600 font-bold text-lg mb-4 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-                  <span>💖</span> この三つの意識が、あなたのエクスポージャーをただす。
-                </h2>
-                <div className="space-y-4">
-                  <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                    <span className="text-3xl">💖</span>
-                    <div>
-                      <motion.p
-                        className="font-bold text-base text-gray-800 mb-2"
-                        animate={{ rotate: [-0.5, 0.5, -0.5] }}
-                        transition={{ duration: 0.3, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        逃げは、いい戦略ではなかったことを意識
-                      </motion.p>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        怖いものから逃げると一時的に楽になる。しかし脳の
-                        <span className="text-green-600 font-semibold">危険なものに対しては逃げよう</span>となったままであること。不快感から逃げないことが、危険じゃないものであると再学習する機会である。
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                    <span className="text-3xl">💖</span>
-                    <div>
-                      <motion.p
-                        className="font-bold text-base text-gray-800 mb-2"
-                        animate={{ rotate: [-0.5, 0.5, -0.5] }}
-                        transition={{ duration: 0.3, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        不安は「誤作動した警報」である
-                      </motion.p>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        本来、不安は危険から身を守るために必要なもの。しかし今あなたが感じている不安は、
-                        <span className="text-green-600 font-semibold">実際には危険でないものに対して鳴り続けている誤作動した警報</span>。
-                        エクスポージャーはその警報をリセットする作業だ。
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                    <span className="text-3xl">💖</span>
-                    <div>
-                      <motion.p
-                        className="font-bold text-base text-gray-800 mb-2"
-                        animate={{ rotate: [-0.5, 0.5, -0.5] }}
-                        transition={{ duration: 0.3, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        不快感とその安全な結果のセットは脳に学習の機会を与え、不快じゃなくする方法である。
-                      </motion.p>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        エクスポージャー中の不快感は効いているサイン。
-                        <span className="text-green-600 font-semibold">向き合い続けることで、脳が安全な結果を学習し落ち着いていく</span>。
-                        この体験を繰り返すことが、脳の再学習につながる。
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ナビゲーションボタン */}
-          <div className="text-center py-6 space-y-4">
-            {explainPage < 2 ? (
-              <button
-                onClick={() => {
-                  playSound('/sound/nextpage.mp3')
-                  setExplainPage(prev => prev + 1)
-                }}
-                className="bg-gradient-to-r from-green-500 to-green-600 text-gray-900 font-black px-12 py-4 rounded-full text-base tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
-              >
-                次へ →
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  playSound('/sound/nextpage.mp3')
-                  setQuizStarted(true)
-                }}
-                onMouseEnter={playHover}
-                className="bg-gradient-to-r from-green-500 to-green-600 text-gray-900 font-black px-12 py-4 rounded-full text-base tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
-              >
-                🌿 理解度クイズに挑戦する →
-              </button>
-            )}
-
-            {/* 戻るボタン（2ページ目以降） */}
-            {explainPage > 0 && (
-              <div>
-                <button
-                  onClick={() => {
-                    playSound('/sound/nextpage.mp3')
-                    setExplainPage(prev => prev - 1)
-                  }}
-                  className="text-green-600 hover:text-green-700 underline text-sm mr-4"
-                >
-                  ← 戻る
-                </button>
-              </div>
-            )}
-
-            {/* アフィリエイト画像 */}
-            <div className="mt-6 flex justify-center">
-              <div dangerouslySetInnerHTML={{ __html: affiliateHtml }} />
-            </div>
-
-            {/* 終了ボタン */}
-            <div>
-              <button
-                onClick={() => {
-                  playSound('/sound/nextpage.mp3')
-                  onExit()
-                }}
-                className="text-gray-500 hover:text-gray-700 underline text-sm"
-              >
-                終了する
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DialogueBox
+        lines={exposureExplanationLines}
+        onComplete={() => {
+          playSound('/sound/nextpage.mp3')
+          setQuizStarted(true)
+        }}
+        catVideoSrc={explainCatVideo}
+        isMuted={isMuted}
+        onExit={() => {
+          playSound('/sound/nextpage.mp3')
+          onExit()
+        }}
+        title="🌿 エクスポージャー理解チェック"
+        subtitle="Exposure Therapy"
+      />
     )
   }
 
@@ -1314,6 +1334,7 @@ const ProfileSetupPage = ({
   onComplete,
   onExit,
   isMuted,
+  theme,
 }: {
   gender: string
   setGender: (value: string) => void
@@ -1336,21 +1357,29 @@ const ProfileSetupPage = ({
   onComplete: () => void
   onExit: () => void
   isMuted: boolean
+  theme: ExposeTheme
 }) => {
   const { language } = useLanguage()
   const [showConfetti, setShowConfetti] = useState(false)
   const [currentPoints, setCurrentPoints] = useState(0)
   const [showDiligentMessage, setShowDiligentMessage] = useState(false)
-  const [completedWhyFields, setCompletedWhyFields] = useState<boolean[]>([false, false, false, false, false])
+  const [completedWhyFields, setCompletedWhyFields] = useState<boolean[]>([false])
   const [discomfortCompleted, setDiscomfortCompleted] = useState(false)
   const [fearCompleted, setFearCompleted] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  // 猫動画をランダムに選択
+  const [selectedVideo] = useState(() => QUIZ_CAT_VIDEOS[Math.floor(Math.random() * QUIZ_CAT_VIDEOS.length)])
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   // 効果音フック
   const { playTyping, playClick, playHover } = useInteractionSounds(isMuted)
+  // ページステップ管理（各セクションを1ページずつ表示）
+  const [currentStep, setCurrentStep] = useState(0)
+  const totalSteps = 5
 
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [])
+  }, [currentStep])
 
   // 効果音再生
   const playSound = useCallback((soundFile: string) => {
@@ -1378,7 +1407,7 @@ const ProfileSetupPage = ({
     }, 1000)
   }
 
-  // なぜワークの入力完了処理（各100pt）
+  // なぜワークの入力完了処理（100pt）
   const handleWhyFieldBlur = (index: number, value: string) => {
     if (value.trim() && !completedWhyFields[index]) {
       const newCompleted = [...completedWhyFields]
@@ -1389,6 +1418,10 @@ const ProfileSetupPage = ({
       playSound('/sound/100pt.mp3')
       setShowConfetti(true)
       setTimeout(() => setShowConfetti(false), 1000)
+      // 自動的にstrongestDesireを1に設定（1つの欄のみなので）
+      if (index === 0) {
+        setStrongestDesire(1)
+      }
     }
   }
 
@@ -1419,7 +1452,26 @@ const ProfileSetupPage = ({
   // 次へ進む条件（全部埋めなくても進めるように緩和）
   const canProceed = true
 
-  return (
+  // 次のステップへ進む
+  const handleNextStep = () => {
+    playSound('/sound/nextpage.mp3')
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep(prev => prev + 1)
+    } else {
+      onComplete()
+    }
+  }
+
+  // 前のステップへ戻る
+  const handlePrevStep = () => {
+    playSound('/sound/nextpage.mp3')
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1)
+    }
+  }
+
+  // 共通のページラッパー
+  const PageWrapper = ({ children, title, subtitle }: { children: React.ReactNode, title: string, subtitle?: string }) => (
     <div className="relative w-full min-h-screen flex flex-col items-center p-6 animate-fade-in overflow-y-auto"
       style={{ background: "#f5f7f2" }}>
       <ConfettiCanvas isActive={showConfetti} duration={1000} particleCount={50} points={currentPoints} />
@@ -1429,237 +1481,43 @@ const ProfileSetupPage = ({
         <div className="text-center py-4">
           <p className="text-xs tracking-widest text-green-600 uppercase mb-2 opacity-80">Profile Setup</p>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 font-serif leading-tight">
-            💕 あなたについて教えてください 💕
+            {title}
           </h1>
-          <p className="text-sm text-pink-400 mt-1">💗💗💗</p>
-          <p className="text-sm text-gray-500 mt-1">（自由記述です。入力しなくても次へ進めます）</p>
+          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
           <div className="text-green-600 text-xl font-extrabold mt-2">🏆 {totalPoints}pt</div>
-        </div>
-
-        {/* カード1: 性別・年代 */}
-        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
-          <h2 className="text-green-600 font-serif text-base mb-5 flex items-center gap-2">
-            <span>👤</span> 基本情報
-          </h2>
-          <div className="space-y-4">
-            {/* 性別 */}
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">性別</label>
-              <div className="flex flex-wrap gap-2">
-                {["男性", "女性", "その他", "回答しない"].map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => setGender(option)}
-                    className={`px-4 py-2 rounded-xl border-2 text-sm transition-all ${
-                      gender === option
-                        ? "bg-green-500 text-white border-green-500"
-                        : "bg-gray-50 text-gray-700 border-green-100 hover:border-green-500"
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* 年代 */}
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">年代</label>
-              <div className="flex flex-wrap gap-2">
-                {["10代", "20代", "30代", "40代", "50代", "60代以上"].map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => setAgeGroup(option)}
-                    className={`px-4 py-2 rounded-xl border-2 text-sm transition-all ${
-                      ageGroup === option
-                        ? "bg-green-500 text-white border-green-500"
-                        : "bg-gray-50 text-gray-700 border-green-100 hover:border-green-500"
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* カード2: 自分を大切にする行動（300pt） */}
-        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
-          <h2 className="text-green-600 font-serif text-base mb-5 flex items-center gap-2">
-            <span>💚</span> 自己ケア
-            <span className="ml-auto text-yellow-600 text-sm font-bold">+300pt</span>
-          </h2>
-          <p className="text-lg font-bold text-gray-800 mb-4">
-            あなたは自分のことを大切にする行動をしていますか？
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {["はい", "いいえ", "どちらでもない"].map((option) => (
-              <button
-                key={option}
-                onClick={() => handleSelfCareSelect(option)}
-                disabled={!!selfCareAnswer}
-                className={`px-6 py-3 rounded-xl border-2 text-base font-medium transition-all ${
-                  selfCareAnswer === option
-                    ? "bg-green-500 text-white border-green-500"
-                    : selfCareAnswer
-                      ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                      : "bg-gray-50 text-gray-700 border-green-100 hover:border-green-500 hover:bg-green-50"
+          {/* プログレス */}
+          <div className="flex justify-center gap-2 mt-3">
+            {Array.from({ length: totalSteps }).map((_, idx) => (
+              <div
+                key={idx}
+                className={`w-3 h-3 rounded-full transition-all ${
+                  idx === currentStep ? "bg-green-500 w-6" : idx < currentStep ? "bg-green-400" : "bg-gray-300"
                 }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          {showDiligentMessage && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200"
-            >
-              <p className="text-yellow-700 font-bold text-center">🌟 勤勉な人だ！ 🌟</p>
-            </motion.div>
-          )}
-        </div>
-
-        {/* カード3: なぜを問うワーク（各100pt） */}
-        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
-          <h2 className="text-green-600 font-serif text-base mb-3 flex items-center gap-2">
-            <span>🔍</span> 強い欲求を見つけるワーク
-            <span className="ml-auto text-yellow-600 text-sm font-bold">各+100pt</span>
-          </h2>
-          <p className="text-sm text-gray-600 mb-2">
-            あなたを不快感に向かわせるモチベーションとしてあなたの欲求を見つけましょう。<br />
-            あなたの欲しいものについて５回どうしてと問いた先があなたの感情です。
-          </p>
-
-          <div className="space-y-2">
-            {[0, 1, 2, 3, 4].map((index) => (
-              <div key={index}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-green-600 font-bold text-sm">{index + 1}.</span>
-                  {completedWhyFields[index] && <span className="text-green-500 text-xs">✓ +100pt</span>}
-                </div>
-                <Input
-                  type="text"
-                  value={whyAnswers[index] || ''}
-                  onChange={(e) => {
-                    const newAnswers = [...whyAnswers]
-                    newAnswers[index] = e.target.value
-                    setWhyAnswers(newAnswers)
-                  }}
-                  onBlur={(e) => handleWhyFieldBlur(index, e.target.value)}
-                  placeholder={index === 0 ? "あなたが価値あると思っていることは何ですか？" : "それはどうしてですか？"}
-                  className="w-full border-2 border-green-200 rounded-xl focus:border-green-500"
-                />
-                {index < 4 && (
-                  <div className="flex flex-col items-center my-2">
-                    <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                    <span className="text-green-600 text-xs font-bold">どうして？</span>
-                  </div>
-                )}
-              </div>
+              />
             ))}
           </div>
         </div>
 
-        {/* カード5: 強い欲求の選択 */}
-        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
-          <h2 className="text-green-600 font-serif text-base mb-5 flex items-center gap-2">
-            <span>⭐</span> 一番強い欲求を選択
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            上の1〜5番の中から、一番あなたの強い欲求として当てはまるものを選んでください。<br />
-            <span className="text-green-600 font-bold">この選択はゲーム中ずっと表示されます。</span>
-          </p>
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((num) => (
-              <button
-                key={num}
-                onClick={() => setStrongestDesire(num)}
-                className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
-                  strongestDesire === num
-                    ? "bg-green-500 text-white border-green-500"
-                    : "bg-gray-50 text-gray-700 border-green-100 hover:border-green-500"
-                }`}
-              >
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                  strongestDesire === num ? "bg-white text-green-600" : "bg-green-100 text-green-600"
-                }`}>
-                  {num}
-                </span>
-                <span className="text-sm">
-                  {whyAnswers[num - 1] || `（${num}番目の回答を入力してください）`}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+        {children}
 
-        {/* カード6: 不快感の始まり（100pt） */}
-        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
-          <h2 className="text-green-600 font-serif text-base mb-5 flex items-center gap-2">
-            <span>🌱</span> 不快感の起源
-            <span className="ml-auto text-yellow-600 text-sm font-bold">+100pt</span>
-            {discomfortCompleted && <span className="text-green-500 text-xs">✓</span>}
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            あなたの不快感の始まりだと考えられるのは何ですか？<br />
-            <span className="text-gray-500 text-xs">（この質問はエクスポージャーに取り組むのに役立ちます）</span>
-          </p>
-          <textarea
-            value={discomfortOrigin}
-            onChange={(e) => setDiscomfortOrigin(e.target.value)}
-            onBlur={(e) => handleDiscomfortBlur(e.target.value)}
-            onKeyDown={playTyping}
-            placeholder="例：幼少期の経験、特定の出来事、人間関係など"
-            className="w-full h-24 p-4 border-2 border-green-200 rounded-xl focus:border-green-500 focus:outline-none resize-none text-sm"
-          />
-        </div>
-
-        {/* カード7: あなたが解決したい不快感（100pt） */}
-        <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 shadow-lg border-4 border-orange-400 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-orange-500 to-red-400" />
-          <h2 className="text-orange-600 font-bold text-lg mb-3 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-            <span>🎯</span> あなたが解決したい不快感を書いてください
-            <span className="ml-auto text-yellow-600 text-sm font-bold">+100pt</span>
-            {fearCompleted && <span className="text-green-500 text-xs">✓</span>}
-          </h2>
-          <p className="text-sm text-orange-700 mb-3">
-            エクスポージャーで向き合いたい不安や恐れを具体的に書いてください。
-          </p>
-          <textarea
-            value={fearDescription}
-            onChange={(e) => setFearDescription(e.target.value)}
-            onBlur={(e) => handleFearBlur(e.target.value)}
-            onKeyDown={playTyping}
-            placeholder="例：人前で話すこと、失敗すること、拒絶されること、高所、特定の状況など"
-            className="w-full h-28 p-4 border-2 border-orange-300 rounded-xl focus:border-orange-500 focus:outline-none resize-none text-base"
-          />
-        </div>
-
-        {/* 次へボタン */}
+        {/* ナビゲーションボタン */}
         <div className="text-center py-6 space-y-4">
-          <button
-            onClick={() => {
-              playSound('/sound/nextpage.mp3')
-              onComplete()
-            }}
-            disabled={!canProceed}
-            className={`px-12 py-4 rounded-full text-base tracking-wide shadow-lg transition-all ${
-              canProceed
-                ? "bg-gradient-to-r from-green-500 to-green-600 text-gray-900 font-black hover:shadow-xl hover:-translate-y-0.5"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            次へ進む →
-          </button>
+          <div className="flex justify-center gap-4">
+            {currentStep > 0 && (
+              <button
+                onClick={handlePrevStep}
+                className="px-8 py-3 rounded-full text-base tracking-wide shadow-lg transition-all bg-gray-200 text-gray-700 font-bold hover:bg-gray-300"
+              >
+                ← 戻る
+              </button>
+            )}
+            <button
+              onClick={handleNextStep}
+              className="px-12 py-4 rounded-full text-base tracking-wide shadow-lg transition-all bg-gradient-to-r from-green-500 to-green-600 text-gray-900 font-black hover:shadow-xl hover:-translate-y-0.5"
+            >
+              {currentStep < totalSteps - 1 ? "次へ →" : "完了 →"}
+            </button>
+          </div>
           <div>
             <button
               onClick={() => {
@@ -1675,6 +1533,249 @@ const ProfileSetupPage = ({
       </div>
     </div>
   )
+
+  // ステップ0: 基本情報
+  if (currentStep === 0) {
+    return (
+      <PageWrapper title="👤 基本情報" subtitle="性別と年代を教えてください">
+        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
+          <div className="space-y-6">
+            {/* 性別 */}
+            <div>
+              <label className="block text-lg font-bold text-gray-700 mb-3">性別</label>
+              <div className="flex flex-wrap gap-2">
+                {["男性", "女性", "その他", "回答しない"].map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setGender(option)}
+                    className={`px-5 py-3 rounded-xl border-2 text-base transition-all ${
+                      gender === option
+                        ? "bg-green-500 text-white border-green-500"
+                        : "bg-gray-50 text-gray-700 border-green-100 hover:border-green-500"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* 年代 */}
+            <div>
+              <label className="block text-lg font-bold text-gray-700 mb-3">年代</label>
+              <div className="flex flex-wrap gap-2">
+                {["10代", "20代", "30代", "40代", "50代", "60代以上"].map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setAgeGroup(option)}
+                    className={`px-5 py-3 rounded-xl border-2 text-base transition-all ${
+                      ageGroup === option
+                        ? "bg-green-500 text-white border-green-500"
+                        : "bg-gray-50 text-gray-700 border-green-100 hover:border-green-500"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </PageWrapper>
+    )
+  }
+
+  // ステップ1: 自己ケア
+  if (currentStep === 1) {
+    return (
+      <PageWrapper title="💚 自己ケア" subtitle="あなたは自分を大切にしていますか？">
+        <div className="bg-white rounded-2xl p-6 shadow-md border border-green-100 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
+          <div className="text-right mb-2">
+            <span className="text-yellow-600 text-sm font-bold">+300pt</span>
+          </div>
+
+          {/* 猫動画 + 吹き出し */}
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center bg-gray-200 border-4 border-green-400 shadow-lg flex-shrink-0">
+              <video
+                ref={videoRef}
+                src={selectedVideo}
+                className="w-full h-full object-cover"
+                muted
+                playsInline
+                preload="metadata"
+                onEnded={() => {
+                  setIsVideoPlaying(false)
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = 0
+                  }
+                }}
+              />
+            </div>
+            <div className="relative bg-white rounded-2xl px-6 py-4 shadow-lg border-2 border-green-300">
+              <div className="absolute left-0 top-1/2 transform -translate-x-3 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-green-300 border-b-8 border-b-transparent" />
+              <p className="text-lg font-bold text-green-700">自分を大切に<br />していますか？</p>
+            </div>
+          </div>
+
+          {/* はい・いいえボタン */}
+          <div className="flex flex-wrap gap-3 justify-center mb-4">
+            {["はい", "いいえ", "どちらでもない"].map((option) => (
+              <button
+                key={option}
+                onClick={() => {
+                  handleSelfCareSelect(option)
+                  setIsVideoPlaying(true)
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = 0
+                    videoRef.current.play().catch(() => {})
+                  }
+                }}
+                disabled={!!selfCareAnswer}
+                className={`px-6 py-3 rounded-xl border-2 text-lg font-medium transition-all ${
+                  selfCareAnswer === option
+                    ? "bg-green-500 text-white border-green-500 shadow-lg"
+                    : selfCareAnswer
+                      ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
+                      : "bg-gray-50 text-gray-700 border-green-200 hover:border-green-500 hover:bg-green-50"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {showDiligentMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+            >
+              <p className="text-yellow-700 font-bold text-center">🌟 勤勉な人だ！ 🌟</p>
+            </motion.div>
+          )}
+        </div>
+      </PageWrapper>
+    )
+  }
+
+  // ステップ2: 強い欲求
+  if (currentStep === 2) {
+    return (
+      <PageWrapper title="🔍 強い欲求を見つける" subtitle="あなたを動かすモチベーションは何ですか？">
+        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
+          <div className="text-right mb-2">
+            <span className="text-yellow-600 text-sm font-bold">+100pt</span>
+            {completedWhyFields[0] && <span className="text-green-500 text-xs ml-2">✓</span>}
+          </div>
+          <p className="text-base text-gray-600 mb-6">
+            あなたを不快感に向かわせるモチベーションとなる欲求を見つけましょう。
+          </p>
+
+          <div className="mb-8">
+            <Input
+              type="text"
+              value={whyAnswers[0] || ''}
+              onChange={(e) => {
+                const newAnswers = [...whyAnswers]
+                newAnswers[0] = e.target.value
+                setWhyAnswers(newAnswers)
+              }}
+              onBlur={(e) => handleWhyFieldBlur(0, e.target.value)}
+              placeholder="あなたが価値あると思っていることは何ですか？"
+              className="w-full border-2 border-green-200 rounded-xl focus:border-green-500 text-lg p-4"
+            />
+          </div>
+        </div>
+      </PageWrapper>
+    )
+  }
+
+  // ステップ3: 不快感の起源
+  if (currentStep === 3) {
+    return (
+      <PageWrapper title="🌱 不快感の起源" subtitle="あなたの不快感はどこから始まりましたか？">
+        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
+          <div className="text-right mb-2">
+            <span className="text-yellow-600 text-sm font-bold">+100pt</span>
+            {discomfortCompleted && <span className="text-green-500 text-xs ml-2">✓</span>}
+          </div>
+          <p className="text-base text-gray-600 mb-6">
+            あなたの不快感の始まりだと考えられるのは何ですか？<br />
+            <span className="text-gray-500 text-sm">（この質問はエクスポージャーに取り組むのに役立ちます）</span>
+          </p>
+          <textarea
+            value={discomfortOrigin}
+            onChange={(e) => setDiscomfortOrigin(e.target.value)}
+            onBlur={(e) => handleDiscomfortBlur(e.target.value)}
+            onKeyDown={playTyping}
+            placeholder="例：幼少期の経験、特定の出来事、人間関係など"
+            className="w-full h-32 p-4 border-2 border-green-200 rounded-xl focus:border-green-500 focus:outline-none resize-none text-base"
+          />
+        </div>
+      </PageWrapper>
+    )
+  }
+
+  // ステップ4: 解決したい不快感
+  if (currentStep === 4) {
+    return (
+      <PageWrapper title="🎯 解決したい不快感" subtitle="エクスポージャーで向き合いたい不安や恐れは何ですか？">
+        <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 shadow-lg border-4 border-orange-400 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-orange-500 to-red-400" />
+          <div className="text-right mb-2">
+            <span className="text-yellow-600 text-sm font-bold">+100pt</span>
+            {fearCompleted && <span className="text-green-500 text-xs ml-2">✓</span>}
+          </div>
+          <p className="text-base text-orange-700 mb-4">
+            {theme.id !== "general"
+              ? `「${theme.name}」に関連する不快感の例から選ぶか、自由に書いてください。`
+              : "エクスポージャーで向き合いたい不安や恐れを具体的に書いてください。"
+            }
+          </p>
+          {/* テーマの不快感例ボタン */}
+          {theme.id !== "general" && (
+            <div className="grid grid-cols-1 gap-2 mb-4">
+              {theme.discomfortExamples.map((example, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setFearDescription(example)
+                    handleFearBlur(example)
+                    playClick()
+                  }}
+                  className={`text-left p-3 rounded-xl border-2 transition-all text-base ${
+                    fearDescription === example
+                      ? "border-orange-500 bg-orange-100 text-orange-800"
+                      : "border-orange-200 bg-white hover:border-orange-300 hover:bg-orange-50 text-gray-700"
+                  }`}
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          )}
+          <p className="text-sm text-gray-500 mb-2">または自由に書いてください：</p>
+          <textarea
+            value={fearDescription}
+            onChange={(e) => setFearDescription(e.target.value)}
+            onBlur={(e) => handleFearBlur(e.target.value)}
+            onKeyDown={playTyping}
+            placeholder={theme.id !== "general"
+              ? "上から選ぶか、ここに自分の言葉で書いてください"
+              : "例：人前で話すこと、失敗すること、拒絶されること、高所、特定の状況など"
+            }
+            className="w-full h-24 p-4 border-2 border-orange-300 rounded-xl focus:border-orange-500 focus:outline-none resize-none text-base"
+          />
+        </div>
+      </PageWrapper>
+    )
+  }
+
+  return null
 }
 
 // 行動プランページ（Duolingoライクな新UI）
@@ -1698,6 +1799,7 @@ const ActionPlanPage = ({
   onFieldComplete,
   isMuted,
   strongestDesireText,
+  theme,
 }: {
   actionPlans: ActionPlan[]
   totalPoints: number
@@ -1709,6 +1811,7 @@ const ActionPlanPage = ({
   onFieldComplete: () => void
   isMuted: boolean
   strongestDesireText: string | null
+  theme: ExposeTheme
 }) => {
   const { language } = useLanguage()
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -1964,6 +2067,34 @@ const ActionPlanPage = ({
               </p>
             </div>
           </div>
+
+          {/* テーマ別の例カード */}
+          {theme.id !== "general" && (
+            <div className="bg-white rounded-2xl p-6 shadow-lg border-4 border-purple-400 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-purple-500 to-purple-400" />
+              <h2 className="text-purple-600 font-bold text-lg mb-4 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
+                <span>{theme.icon}</span> 「{theme.name}」の行動例
+              </h2>
+              <div className="space-y-3">
+                {theme.levelExamples.map((example, idx) => (
+                  <div key={idx} className="bg-purple-50 p-3 rounded-xl border border-purple-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        Lv.{example.level}
+                      </span>
+                      <span className="text-purple-700 font-semibold text-sm">{example.what}</span>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      📅 {example.when} | 📍 {example.where}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-xs text-gray-500 text-center">
+                ※これは参考例です。あなた自身に合った行動を考えてみましょう。
+              </p>
+            </div>
+          )}
 
           {/* 開始ボタン */}
           <div className="text-center py-6">
@@ -2321,6 +2452,8 @@ const PrePainMeterPage = ({
 
   // 説明ページ表示状態
   const [showIntro, setShowIntro] = useState(true)
+  // 猫動画（ランダム選択）
+  const [catVideoSrc] = useState(() => QUIZ_CAT_VIDEOS[Math.floor(Math.random() * QUIZ_CAT_VIDEOS.length)])
 
   // 効果音再生
   const playSound = useCallback((soundFile: string) => {
@@ -2345,99 +2478,24 @@ const PrePainMeterPage = ({
   // 温度計の液体の高さを計算（0-10のスケールを0-100%に変換）
   const liquidHeight = `${fearLevel * 10}%`
 
-  // 説明ページ（想像前の注意点）
+  // セリフ形式の説明ページ（想像前の注意点）
   if (showIntro) {
     return (
-      <div className="relative w-full min-h-screen flex flex-col items-center p-6 animate-fade-in overflow-y-auto"
-        style={{ background: "#f5f7f2" }}>
-        <div className="w-full max-w-2xl space-y-6 pb-20">
-          {/* タイトル */}
-          <div className="text-center py-4">
-            <p className="text-xs tracking-widest text-green-600 uppercase mb-2 opacity-80">Imagination Exposure</p>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 leading-tight" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-              🧘 想像エクスポージャーの説明
-            </h1>
-          </div>
-
-          {/* やることの説明カード */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border-4 border-green-400 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-500 to-green-400" />
-            <h2 className="text-green-600 font-bold text-lg mb-4 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-              <span>📝</span> これからやること
-            </h2>
-            <div className="space-y-4">
-              <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                <span className="text-3xl">🎯</span>
-                <div>
-                  <p className="font-bold text-base text-gray-800 mb-2">恐れている状況を想像する</p>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    先ほど作成した行動リストの状況を、<span className="text-green-600 font-semibold">目を閉じて30秒間想像</span>します。
-                    まるで今起きているかのように、鮮明に思い浮かべてください。
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
-                <span className="text-3xl">💪</span>
-                <div>
-                  <p className="font-bold text-base text-gray-800 mb-2">不快感から逃げない</p>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    想像中に不快感を感じても、<span className="text-green-600 font-semibold">考えないようにしたり、逃げたりしない</span>でください。
-                    不快感を全身で感じることが大切です。
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 注意点カード */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border-4 border-orange-400 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-orange-500 to-orange-400" />
-            <h2 className="text-orange-600 font-bold text-lg mb-4 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-              <span>⚠️</span> 大切な注意点
-            </h2>
-            <div className="space-y-3 text-sm text-gray-700">
-              <div className="flex gap-3 items-start bg-orange-50 p-3 rounded-lg">
-                <span className="text-xl">✓</span>
-                <p><span className="font-bold text-orange-700">不快感は効いているサイン</span> - 向き合い続けることで、脳が学習し落ち着いていきます</p>
-              </div>
-              <div className="flex gap-3 items-start bg-orange-50 p-3 rounded-lg">
-                <span className="text-xl">✓</span>
-                <p><span className="font-bold text-orange-700">ピークを越えると落ち着く</span> - 不快感は必ず自然に減っていきます</p>
-              </div>
-              <div className="flex gap-3 items-start bg-red-50 p-3 rounded-lg">
-                <span className="text-xl">✗</span>
-                <p><span className="font-bold text-red-700">本当に危険なものには行わない</span> - 安全な範囲で行ってください</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 開始ボタン */}
-          <div className="text-center py-6">
-            <button
-              onClick={() => {
-                playSound('/sound/nextpage.mp3')
-                setShowIntro(false)
-              }}
-              className="bg-gradient-to-r from-green-500 to-green-600 text-gray-900 font-black px-12 py-4 rounded-full text-base tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
-            >
-              恐怖度を測定する →
-            </button>
-          </div>
-
-          {/* 終了ボタン */}
-          <div className="text-center">
-            <button
-              onClick={() => {
-                playSound('/sound/nextpage.mp3')
-                onExit()
-              }}
-              className="text-gray-500 hover:text-gray-700 underline text-sm"
-            >
-              終了する
-            </button>
-          </div>
-        </div>
-      </div>
+      <DialogueBox
+        lines={imaginationExplanationLines}
+        onComplete={() => {
+          playSound('/sound/nextpage.mp3')
+          setShowIntro(false)
+        }}
+        catVideoSrc={catVideoSrc}
+        isMuted={isMuted}
+        onExit={() => {
+          playSound('/sound/nextpage.mp3')
+          onExit()
+        }}
+        title="🧘 想像エクスポージャーの説明"
+        subtitle="Imagination Exposure"
+      />
     )
   }
 
@@ -2785,7 +2843,7 @@ const PostPainMeterPage = ({
   )
 }
 
-// 不安イメージページ（reaffalen.tsxの内容を統合）
+// 音声エクスポージャーページ（音声認識で言葉を繰り返す）
 const AnxietyVisualizationPage = ({
   actionPlans,
   totalPoints,
@@ -2793,6 +2851,7 @@ const AnxietyVisualizationPage = ({
   onAddPoints,
   onExit,
   strongestDesireText,
+  fearDescription,
   isMuted,
 }: {
   actionPlans: ActionPlan[]
@@ -2801,20 +2860,29 @@ const AnxietyVisualizationPage = ({
   onAddPoints: () => void
   onExit: () => void
   strongestDesireText: string | null
+  fearDescription: string
   isMuted: boolean
 }) => {
   const { language } = useLanguage()
   const t = (key: TranslationKey) => exposeTranslations[language][key]
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const mouseRef = useRef({ x: 0, y: 0 })
   const leavesRef = useRef<Leaf[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [currentLevel, setCurrentLevel] = useState(0) // 現在のレベル（0から始まる）
-  const [timeLeft, setTimeLeft] = useState(30) // 各レベル30秒
-  const [isActive, setIsActive] = useState(true)
+  const kirariAudioRef = useRef<HTMLAudioElement | null>(null)
+  const recognitionRef = useRef<any>(null)
+  const lastTimeRef = useRef(0)
+
+  const [currentLevel, setCurrentLevel] = useState(0)
+  const [elapsedTime, setElapsedTime] = useState(0)
   const [showConfetti, setShowConfetti] = useState(false)
-  const [hasAddedPoints, setHasAddedPoints] = useState(false) // ポイント追加済みフラグ
+  const [hasAddedPoints, setHasAddedPoints] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [recognizedText, setRecognizedText] = useState("")
+  const [speechSupported, setSpeechSupported] = useState(true)
+  const [micPermissionDenied, setMicPermissionDenied] = useState(false)
 
   // 効果音再生
   const playSound = useCallback((soundFile: string) => {
@@ -2828,144 +2896,188 @@ const AnxietyVisualizationPage = ({
     audioRef.current.play().catch(() => {})
   }, [isMuted])
 
+  // キラキラ音再生（秒数増加時）
+  const playKirariSound = useCallback(() => {
+    if (isMuted) return
+    const audio = new Audio('/sound/メルヘンチックなキラキラ音.mp3')
+    audio.volume = 0.3
+    audio.play().catch(() => {})
+  }, [isMuted])
+
   // ページ読み込み時にスクロール位置を上に
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
-  // タイマー処理
+  // 秒数を増やす関数（即時反映）
+  const incrementTime = useCallback(() => {
+    setElapsedTime(prev => {
+      const newTime = Math.min(prev + 1, 30)
+      if (newTime > prev) {
+        playKirariSound()
+      }
+      return newTime
+    })
+  }, [playKirariSound])
+
+  // 音声認識の初期化
   useEffect(() => {
-    if (!isActive) return
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      setSpeechSupported(false)
+      return
+    }
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          // タイマーが0になる瞬間
-          if (!hasAddedPoints) {
-            setHasAddedPoints(true) // フラグを立てる
-            onAddPoints() // 300pt追加（一度だけ）
-            playSound('/sound/300ptnextpage.mp3') // 300ptサウンド
-            setShowConfetti(true)
+    const recognition = new SpeechRecognition()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = 'ja-JP'
 
-            setTimeout(() => {
-              setShowConfetti(false)
-              if (currentLevel < actionPlans.length - 1) {
-                // 次のレベルへ
-                setCurrentLevel((prev) => prev + 1)
-                setTimeLeft(30)
-                setHasAddedPoints(false) // フラグをリセット
-              } else {
-                // 全レベル完了
-                onImageComplete()
-              }
-            }, 1000)
+    recognition.onresult = (event: any) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        // interimResults（中間結果）でも即座に秒数を増やす
+        if (transcript.length > 0) {
+          const now = Date.now()
+          // 500ms以上経過していれば秒数を増やす
+          if (now - lastTimeRef.current > 500) {
+            lastTimeRef.current = now
+            incrementTime()
           }
-          return 0
         }
-        return prev - 1
-      })
-    }, 1000)
+        if (event.results[i].isFinal) {
+          setRecognizedText(prev => prev + transcript + ' ')
+        }
+      }
+    }
 
-    return () => clearInterval(interval)
-  }, [isActive, currentLevel, actionPlans.length, hasAddedPoints, onAddPoints, onImageComplete])
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error)
+      if (event.error === 'not-allowed') {
+        setMicPermissionDenied(true)
+      }
+      setIsListening(false)
+    }
 
-  const formatTime = (seconds: number) => {
-    return `${seconds}秒`
+    recognition.onend = () => {
+      if (isListening && !micPermissionDenied) {
+        try {
+          recognition.start()
+        } catch (e) {
+          console.error('Failed to restart recognition:', e)
+        }
+      }
+    }
+
+    recognitionRef.current = recognition
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch (e) {}
+      }
+    }
+  }, [isListening, micPermissionDenied, incrementTime])
+
+  // 30秒に達したらレベル完了
+  useEffect(() => {
+    if (elapsedTime >= 30 && !hasAddedPoints) {
+      setHasAddedPoints(true)
+      onAddPoints()
+      playSound('/sound/300ptnextpage.mp3')
+      setShowConfetti(true)
+
+      setTimeout(() => {
+        setShowConfetti(false)
+        if (currentLevel < actionPlans.length - 1) {
+          setCurrentLevel(prev => prev + 1)
+          setElapsedTime(0)
+          setHasAddedPoints(false)
+          setRecognizedText("")
+          lastTimeRef.current = 0
+        } else {
+          onImageComplete()
+        }
+      }, 1500)
+    }
+  }, [elapsedTime, hasAddedPoints, currentLevel, actionPlans.length, onAddPoints, onImageComplete, playSound])
+
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      try {
+        recognitionRef.current.start()
+        setIsListening(true)
+        setMicPermissionDenied(false)
+        lastTimeRef.current = Date.now()
+      } catch (e) {
+        console.error('Failed to start recognition:', e)
+      }
+    }
   }
 
-  // 現在のレベルの行動プラン
+  const stopListening = () => {
+    if (recognitionRef.current && isListening) {
+      try {
+        recognitionRef.current.stop()
+        setIsListening(false)
+      } catch (e) {
+        console.error('Failed to stop recognition:', e)
+      }
+    }
+  }
+
+  const formatTime = (seconds: number) => `${seconds}秒`
+
   const currentPlan = actionPlans[currentLevel]
 
-  // 対数関数的に進む時間メーター（30秒で100%になる）
-  const getProgressPercentage = () => {
-    const elapsed = 30 - timeLeft // 経過時間
-    // 対数関数: log(1 + x) を使用して、最初は速く、後半はゆっくり進む
-    // 30秒でlog(1 + 30) = log(31) ≈ 3.434になるので、これを100%にする
-    const maxLog = Math.log(1 + 30)
-    const currentLog = Math.log(1 + elapsed)
-    return (currentLog / maxLog) * 100
-  }
+  const getProgressPercentage = () => (elapsedTime / 30) * 100
 
-  // レベルに応じた色を取得
   const getLevelColor = (level: number) => {
-    const colors = [
-      "text-green-600",      // レベル1: 緑
-      "text-blue-600",       // レベル2: 青
-      "text-purple-600",     // レベル3: 紫
-      "text-pink-600",       // レベル4: ピンク
-      "text-orange-600",     // レベル5: オレンジ
-      "text-red-600",        // レベル6: 赤
-      "text-yellow-600",     // レベル7: 黄色
-      "text-indigo-600",     // レベル8: インディゴ
-      "text-teal-600",       // レベル9: ティール
-      "text-cyan-600",       // レベル10: シアン
-    ]
+    const colors = ["text-green-600", "text-blue-600", "text-purple-600", "text-pink-600", "text-orange-600", "text-red-600"]
     return colors[level % colors.length] || "text-green-600"
   }
 
-  // レベルに応じた背景色を取得（メーター用）
   const getLevelBgColor = (level: number) => {
-    const colors = [
-      "bg-green-500",      // レベル1: 緑
-      "bg-blue-500",       // レベル2: 青
-      "bg-purple-500",     // レベル3: 紫
-      "bg-pink-500",       // レベル4: ピンク
-      "bg-orange-500",     // レベル5: オレンジ
-      "bg-red-500",        // レベル6: 赤
-      "bg-yellow-500",     // レベル7: 黄色
-      "bg-indigo-500",     // レベル8: インディゴ
-      "bg-teal-500",       // レベル9: ティール
-      "bg-cyan-500",       // レベル10: シアン
-    ]
+    const colors = ["bg-green-500", "bg-blue-500", "bg-purple-500", "bg-pink-500", "bg-orange-500", "bg-red-500"]
     return colors[level % colors.length] || "bg-green-500"
   }
 
-  // 葉っぱの色を難易度に応じて明るくする
-  const getLeafColors = (level: number): string[] => {
-    const baseColors = [
-      "#22c55e", // green
-      "#16a34a", // darker green
-      "#84cc16", // lime
-      "#65a30d", // olive
-      "#14532d", // forest green
-      "#86efac", // light green
-    ]
+  const getLeafColors = (): string[] => ["#22c55e", "#16a34a", "#84cc16", "#65a30d", "#14532d", "#86efac"]
 
-    // レベルが上がるほど明るくする（HSL調整）
-    const brightnessMultiplier = 1 + (level * 0.15)
-    return baseColors.map(color => {
-      // 簡易的に明るさを調整
-      return color
-    })
-  }
-
-  const [showLevelComplete, setShowLevelComplete] = useState(false)
-
+  // 葉っぱアニメーション（スクロール全体に対応）
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    const container = containerRef.current
+    if (!canvas || !container) return
 
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Set canvas size
     const resizeCanvas = () => {
+      // ドキュメント全体の高さに合わせる
+      const docHeight = Math.max(
+        document.body.scrollHeight,
+        document.body.offsetHeight,
+        document.documentElement.clientHeight,
+        document.documentElement.scrollHeight,
+        document.documentElement.offsetHeight,
+        container.scrollHeight
+      )
       canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      canvas.height = Math.max(docHeight, window.innerHeight * 2)
     }
     resizeCanvas()
     window.addEventListener("resize", resizeCanvas)
 
-    // レベルに応じた色を取得
-    const colors = getLeafColors(0)
+    const colors = getLeafColors()
+    const leafCount = 80
 
-    const leafCount = 60
-    // 初回のみ葉っぱを生成
     if (leavesRef.current.length === 0) {
       for (let i = 0; i < leafCount; i++) {
         leavesRef.current.push({
           x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height - canvas.height,
+          y: Math.random() * canvas.height,
           vx: (Math.random() - 0.5) * 0.5,
           vy: Math.random() * 1 + 0.5,
           width: Math.random() * 15 + 10,
@@ -2980,28 +3092,16 @@ const AnxietyVisualizationPage = ({
       }
     }
 
-    // Mouse move handler
     const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY }
+      mouseRef.current = { x: e.clientX, y: e.clientY + window.scrollY }
     }
     window.addEventListener("mousemove", handleMouseMove)
 
-    const drawLeaf = (
-      ctx: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      width: number,
-      height: number,
-      rotation: number,
-      color: string,
-      alpha: number,
-    ) => {
+    const drawLeaf = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, rotation: number, color: string, alpha: number) => {
       ctx.save()
       ctx.translate(x, y)
       ctx.rotate(rotation)
       ctx.globalAlpha = alpha
-
-      // Leaf shape
       ctx.beginPath()
       ctx.moveTo(0, -height / 2)
       ctx.quadraticCurveTo(width / 2, -height / 4, width / 2, height / 4)
@@ -3009,26 +3109,19 @@ const AnxietyVisualizationPage = ({
       ctx.quadraticCurveTo(-width / 2, height / 2, -width / 2, height / 4)
       ctx.quadraticCurveTo(-width / 2, -height / 4, 0, -height / 2)
       ctx.closePath()
-
       ctx.fillStyle = color
       ctx.fill()
-
-      // Leaf vein
       ctx.beginPath()
       ctx.moveTo(0, -height / 2)
       ctx.lineTo(0, height / 2)
       ctx.strokeStyle = "rgba(0, 0, 0, 0.2)"
       ctx.lineWidth = 1
       ctx.stroke()
-
       ctx.restore()
     }
 
-    // Animation loop
     let animationFrameId: number
-    let time = 0
     const animate = () => {
-      time += 0.016
       const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height)
       gradient.addColorStop(0, "#d1fae5")
       gradient.addColorStop(1, "#a7f3d0")
@@ -3036,25 +3129,11 @@ const AnxietyVisualizationPage = ({
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       leavesRef.current.forEach((leaf) => {
-        // Swaying motion
         leaf.swayOffset += leaf.swaySpeed
         const sway = Math.sin(leaf.swayOffset) * 1.5
-
-        // Update position with sway
         leaf.x += leaf.vx + sway
         leaf.y += leaf.vy
         leaf.rotation += leaf.rotationSpeed
-
-        const dx = mouseRef.current.x - leaf.x
-        const dy = mouseRef.current.y - leaf.y
-        const distance = Math.sqrt(dx * dx + dy * dy)
-
-        if (distance < 100) {
-          const force = (100 - distance) / 100
-          leaf.vx -= (dx / distance) * force * 2
-          leaf.vy -= (dy / distance) * force * 2
-          leaf.rotationSpeed += (Math.random() - 0.5) * 0.1
-        }
 
         if (leaf.y > canvas.height + 50) {
           leaf.y = -50
@@ -3067,11 +3146,9 @@ const AnxietyVisualizationPage = ({
         if (leaf.x < -50) leaf.x = canvas.width + 50
         if (leaf.x > canvas.width + 50) leaf.x = -50
 
-        // Damping
         leaf.vx *= 0.98
         leaf.vy = Math.max(0.5, leaf.vy * 0.99)
 
-        // Draw leaf
         drawLeaf(ctx, leaf.x, leaf.y, leaf.width, leaf.height, leaf.rotation, leaf.color, leaf.alpha)
       })
 
@@ -3081,123 +3158,127 @@ const AnxietyVisualizationPage = ({
 
     animate()
 
-    // Cleanup
+    // リサイズ監視
+    const resizeObserver = new ResizeObserver(() => {
+      resizeCanvas()
+    })
+    resizeObserver.observe(container)
+
     return () => {
       window.removeEventListener("resize", resizeCanvas)
       window.removeEventListener("mousemove", handleMouseMove)
       cancelAnimationFrame(animationFrameId)
+      resizeObserver.disconnect()
     }
   }, [])
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col items-center p-6 animate-fade-in"
-      style={{ background: "#f5f7f2" }}>
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" style={{ minHeight: '100vh' }} />
-      <ConfettiCanvas
-        isActive={showConfetti}
-        duration={1000}
-        particleCount={50}
-        points={300}
-      />
+    <div ref={containerRef} className="relative w-full min-h-screen flex flex-col items-center p-6 animate-fade-in"
+      style={{ background: "linear-gradient(to bottom, #d1fae5, #a7f3d0)" }}>
+      <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }} />
+      <ConfettiCanvas isActive={showConfetti} duration={1000} particleCount={50} points={300} />
 
       <div className="w-full max-w-2xl space-y-6 relative z-10 pb-20">
         {/* タイトル */}
         <div className="text-center py-4">
-          <p className="text-xs tracking-widest text-green-600 uppercase mb-3 opacity-80">Imagination Exposure</p>
+          <p className="text-xs tracking-widest text-green-600 uppercase mb-3 opacity-80">Voice Exposure</p>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 leading-tight" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-            🧘 想像エクスポージャー
+            🎤 音声エクスポージャー
           </h1>
           <div className="text-green-600 text-xl font-extrabold mt-2">🏆 {totalPoints}{t("points")}</div>
-        </div>
-
-        {/* 最も目立つテキスト - 想像して不快感を全身で感じてください */}
-        <div className="bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-2xl p-6 shadow-xl border-4 border-white">
-          <p className="text-center text-white text-2xl md:text-3xl font-black leading-relaxed" style={{ fontFamily: "'Kosugi Maru', sans-serif", textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
-            🔥 想像して不快感を<br />全身で感じてください 🔥
-          </p>
+          <p className="text-sm text-gray-600 mt-1">レベル {currentLevel + 1} / {actionPlans.length}</p>
         </div>
 
         {/* 強い欲求の表示 */}
         {strongestDesireText && (
           <div className="bg-gradient-to-r from-yellow-100 to-amber-100 rounded-2xl p-4 border-2 border-yellow-400 shadow-md">
-            <p className="text-center text-sm text-yellow-800">
+            <p className="text-center text-base text-yellow-800">
               <span className="font-bold">⭐ あなたの強い欲求：</span>
               <span className="text-yellow-900 font-semibold">{strongestDesireText}</span>
             </p>
           </div>
         )}
 
-        {/* 想像の指示カード */}
-        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
-          <h2 className="text-green-600 text-base mb-4 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-            <span>🧘</span> 想像する指示
-          </h2>
-          <div className="space-y-3">
-            <div className="flex gap-3 items-start">
-              <span className="text-xl">👁️</span>
-              <p className="text-sm text-gray-700">
-                <span className="font-bold text-green-700">目を閉じて、30秒間想像してください。</span><br />
-                下に表示されている状況を、まるで今起きているかのように鮮明に思い浮かべましょう。
-              </p>
-            </div>
-            <div className="flex gap-3 items-start">
-              <span className="text-xl">💪</span>
-              <p className="text-sm text-gray-700">
-                <span className="font-bold text-green-700">逃げないで、不快感を感じてください。</span><br />
-                考えないようにしたりせず、苦しみを感じて、その後の安全を確認してください。
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ヒント: うまくできない人向け */}
-        <div className="bg-purple-50 rounded-2xl p-5 shadow-md border border-purple-200">
-          <h3 className="text-purple-700 font-bold text-sm mb-3 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
-            <span>💡</span> うまくできない人へのヒント
-          </h3>
-          <p className="text-sm text-purple-800 leading-relaxed">
-            うまくできない人は、その時に言われてる言葉を何回も繰り返してもいいです。<br />
-            <span className="font-bold text-purple-900">例えば、バカバカバカバカバカバカバカバカバカバカのように。</span><br />
-            不快感が数10回で消えて怖くなくなるでしょう。
+        {/* メイン指示 */}
+        <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-2xl p-6 shadow-xl border-4 border-white">
+          <p className="text-center text-white text-xl md:text-2xl font-black leading-relaxed mb-3" style={{ fontFamily: "'Kosugi Maru', sans-serif", textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+            🎤 そのとき言われてる言葉を<br />じぶんで言ってみましょう
+          </p>
+          <p className="text-center text-white text-base md:text-lg leading-relaxed" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
+            ばかならばかばかばかと繰り返してみましょう
           </p>
         </div>
 
-        {/* 注意点カード */}
-        <div className="bg-orange-50 rounded-2xl p-5 shadow-md border border-orange-200">
-          <h3 className="text-orange-700 font-bold text-sm mb-2 flex items-center gap-2">
-            <span>⚠️</span> 大切な注意点
-          </h3>
-          <ul className="text-xs text-orange-800 space-y-1">
-            <li>• 不快感は効いているサイン。向き合い続けることで脳が学習し落ち着きます</li>
-            <li>• 不快感はピークを越えると、自然に落ち着いていきます</li>
-            <li>• 危険なものに対してはエクスポージャーを行わないでください</li>
-          </ul>
+        {/* マイクボタン（すぐ下に配置） */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg border-4 border-blue-400 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-500 to-cyan-400" />
+
+          {!speechSupported ? (
+            <div className="text-center py-4">
+              <p className="text-red-600 font-bold mb-2">⚠️ このブラウザは音声認識に対応していません</p>
+              <p className="text-sm text-gray-600">Chrome/Edgeブラウザをお使いください</p>
+            </div>
+          ) : micPermissionDenied ? (
+            <div className="text-center py-4">
+              <p className="text-red-600 font-bold mb-2">⚠️ マイクの使用が許可されていません</p>
+              <p className="text-sm text-gray-600">ブラウザの設定でマイクを許可してください</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-center mb-4">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  className={`w-28 h-28 rounded-full flex items-center justify-center text-6xl transition-all shadow-xl ${
+                    isListening
+                      ? "bg-red-500 hover:bg-red-600 animate-pulse"
+                      : "bg-blue-500 hover:bg-blue-600"
+                  }`}
+                >
+                  {isListening ? "🔴" : "🎤"}
+                </button>
+              </div>
+
+              <p className="text-center text-lg font-bold mb-2">
+                {isListening ? (
+                  <span className="text-red-600">🎙️ 聞いています... 声を出してください！</span>
+                ) : (
+                  <span className="text-blue-600">マイクボタンを押して開始</span>
+                )}
+              </p>
+
+              {recognizedText && (
+                <div className="bg-gray-100 rounded-xl p-3 mt-4 max-h-20 overflow-y-auto">
+                  <p className="text-sm text-gray-700">{recognizedText}</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
-        {/* 進捗メーター */}
+        {/* 時間メーター */}
         <div className="bg-white rounded-2xl p-5 shadow-md border border-green-100">
           <div className="flex items-center justify-center gap-3 mb-2">
-            <span className="text-base font-bold text-gray-700">{t("viz_progress")}</span>
-            <span className="text-lg font-extrabold text-gray-900">
-              {currentLevel + 1} / {actionPlans.length}
-            </span>
+            <span className="text-base font-bold text-gray-700">経過時間</span>
+            <h2 className="text-4xl font-bold text-green-900">{formatTime(elapsedTime)} / 30秒</h2>
           </div>
-          <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div className="w-full h-6 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className={`h-full ${getLevelBgColor(currentLevel)} transition-all duration-500`}
-              style={{ width: `${((currentLevel + 1) / actionPlans.length) * 100}%` }}
+              className={`h-full ${getLevelBgColor(currentLevel)} transition-all duration-300`}
+              style={{ width: `${getProgressPercentage()}%` }}
             ></div>
           </div>
+          <p className="text-center mt-3 text-sm text-gray-600">
+            🎤 声を出すと時間が増えます！30秒達成で次のレベルへ
+          </p>
         </div>
 
         {/* 行動プランカード */}
-        <div className="bg-white rounded-2xl p-7 shadow-md border border-green-100 relative overflow-hidden">
+        <div className="bg-white rounded-2xl p-6 shadow-md border border-green-100 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-400" />
-          <h2 className={`text-center mb-4 text-2xl font-bold ${getLevelColor(currentLevel)}`}>
+          <h2 className={`text-center mb-3 text-xl font-bold ${getLevelColor(currentLevel)}`}>
             {t("viz_your_level")}{currentLevel + 1}
           </h2>
-          <div className="text-lg font-medium text-green-800 bg-green-50 p-4 rounded-xl">
+          <div className="text-base font-medium text-green-800 bg-green-50 p-4 rounded-xl">
             <p className="mb-2">
               <span className="font-bold">{t("viz_when")}</span> {currentPlan?.when || t("action_plan_not_entered")}
             </p>
@@ -3210,21 +3291,16 @@ const AnxietyVisualizationPage = ({
           </div>
         </div>
 
-        {/* 時間メーター */}
-        <div className="bg-white rounded-2xl p-5 shadow-md border border-green-100">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <span className="text-base font-bold text-gray-700">{t("viz_imagination_time")}</span>
-            <h2 className="text-3xl font-bold text-green-900">{formatTime(timeLeft)}</h2>
-          </div>
-          <div className="w-full h-5 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${getLevelBgColor(currentLevel)} transition-all duration-300`}
-              style={{ width: `${getProgressPercentage()}%` }}
-            ></div>
-          </div>
-          <p className="text-center mt-3 text-sm text-gray-600">
-            {t("viz_imagine_for_30s")}
-          </p>
+        {/* 注意点 */}
+        <div className="bg-orange-50 rounded-2xl p-5 shadow-md border border-orange-200">
+          <h3 className="text-orange-700 font-bold text-sm mb-2 flex items-center gap-2">
+            <span>⚠️</span> 大切な注意点
+          </h3>
+          <ul className="text-xs text-orange-800 space-y-1">
+            <li>• 不快感は効いているサイン。繰り返すことで脳が学習し落ち着きます</li>
+            <li>• 不快感はピークを越えると、自然に落ち着いていきます</li>
+            <li>• 危険なものに対してはエクスポージャーを行わないでください</li>
+          </ul>
         </div>
 
         {/* ボタンエリア */}
@@ -3232,13 +3308,16 @@ const AnxietyVisualizationPage = ({
           <button
             onClick={() => {
               playSound('/sound/nextpage.mp3')
+              stopListening()
               setShowConfetti(true)
               setTimeout(() => {
                 setShowConfetti(false)
                 if (currentLevel < actionPlans.length - 1) {
                   setCurrentLevel((prev) => prev + 1)
-                  setTimeLeft(30)
+                  setElapsedTime(0)
                   setHasAddedPoints(false)
+                  setRecognizedText("")
+                  lastTimeRef.current = 0
                 } else {
                   onImageComplete()
                 }
@@ -3253,6 +3332,7 @@ const AnxietyVisualizationPage = ({
             <button
               onClick={() => {
                 playSound('/sound/nextpage.mp3')
+                stopListening()
                 onExit()
               }}
               className="text-gray-500 hover:text-gray-700 underline text-sm"
@@ -3430,44 +3510,29 @@ const ResultPage = ({
       const shouldRedirect = true
       const redirectUrl = clickData?.url
 
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH) {
-        console.log("Supabase環境変数が設定されていないため、データ保存をスキップします")
-        setHasSubmitted(true)
-        setIsSubmitting(false)
-
-        if (shouldRedirect && redirectUrl) {
-          setTimeout(() => {
-            window.open(redirectUrl, "_blank")
-          }, 200)
-        }
-      } else {
-        supabase!.from("affiliate_clicks").insert({
+      fetch("/api/affiliate-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game_name: "expose",
           user_id: userId,
           session_id: sessionId,
-          game_name: "expose",
           gender: gender || null,
           age_group: ageGroup || null,
           affiliate_pattern_index: affiliatePatternIndex,
           affiliate_clicked: true,
-          affiliate_click_type: clickData?.clickType || "unknown",
           enjoyment_rating: null,
           improvement_rating: null,
-        }).then(({ error }) => {
-          if (error) {
-            console.error("アフィリエイトクリックの保存に失敗しました:", error)
-          } else {
-            console.log("アフィリエイトクリックが正常に保存されました")
-          }
+        }),
+      }).catch(() => {})
 
-          setHasSubmitted(true)
-          setIsSubmitting(false)
+      setHasSubmitted(true)
+      setIsSubmitting(false)
 
-          if (shouldRedirect && redirectUrl) {
-            setTimeout(() => {
-              window.open(redirectUrl, "_blank")
-            }, 200)
-          }
-        })
+      if (shouldRedirect && redirectUrl) {
+        setTimeout(() => {
+          window.open(redirectUrl, "_blank")
+        }, 200)
       }
     },
     [isSubmitting, hasSubmitted, userId, sessionId, affiliatePatternIndex, gender, ageGroup],
@@ -3648,6 +3713,12 @@ const ResultPage = ({
 
 const ExposeGame = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // URLパラメータからテーマを取得（例: ?theme=perfectionism）
+  const themeId = searchParams.get("theme")
+  const currentTheme: ExposeTheme = themeId ? (getThemeById(themeId) || getDefaultTheme()) : getDefaultTheme()
+
   const [gameState, setGameState] = useState<"intro" | "exposureQuiz" | "profileSetup" | "action" | "quizReview" | "prePainMeter" | "visualization" | "postPainMeter" | "survey" | "result">("intro")
   const [totalPoints, setTotalPoints] = useState(0)
   const [enjoymentRating, setEnjoymentRating] = useState(5)
@@ -3698,7 +3769,23 @@ const ExposeGame = () => {
       }
     }
 
+    // タブの可視性変更時にBGMを制御
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (bgmRef.current) {
+          bgmRef.current.pause()
+        }
+      } else {
+        if (shouldPlayBgm && !isMuted && bgmRef.current) {
+          bgmRef.current.play().catch(console.error)
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
       if (bgmRef.current) {
         bgmRef.current.pause()
       }
@@ -3762,45 +3849,35 @@ const ExposeGame = () => {
     setGameState("survey")
   }
 
-  const handleSurveySubmit = () => {
-    // 全データをSupabaseに保存（1テーブルに統合）
-    if (supabase) {
-      const fearChange = preFearLevel - postFearLevel
-      const recoveryRate = preFearLevel > 0
-        ? Math.round(((preFearLevel - postFearLevel) / preFearLevel) * 100)
-        : 0
-
-      supabase.from("expose_responses").insert({
-        // ユーザー情報
-        user_id: userId,
-        session_id: sessionId,
-        gender: gender || null,
-        age_group: ageGroup || null,
-        // プロフィールデータ
-        self_care_answer: selfCareAnswer,
-        valuable_things: valuableThings,
-        why_answers: whyAnswers,
-        strongest_desire_index: strongestDesire,
-        strongest_desire_text: strongestDesire !== null ? whyAnswers[strongestDesire - 1] : null,
-        discomfort_origin: discomfortOrigin,
-        fear_description: fearDescription,
-        // 恐怖レベル測定
-        pre_fear_level: preFearLevel,
-        post_fear_level: postFearLevel,
-        fear_change: fearChange,
-        recovery_rate: recoveryRate,
-        // ゲーム結果
-        total_points: totalPoints,
-        action_plans: actionPlans.map(plan => `いつ: ${plan.when}, どこで: ${plan.where}, どんなことが起こる: ${plan.what}`),
-        enjoyment_rating: enjoymentRating,
-        improvement_rating: improvementRating,
-      }).then(({ error }) => {
-        if (error) {
-          console.error("データの保存に失敗しました:", error)
-        } else {
-          console.log("データが正常に保存されました")
-        }
+  const handleSurveySubmit = async () => {
+    // 全データをAPIルート経由で保存（1テーブルに統合）
+    try {
+      await fetch("/api/expose-responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          session_id: sessionId,
+          gender: gender || null,
+          age_group: ageGroup || null,
+          self_care_answer: selfCareAnswer,
+          valuable_things: valuableThings,
+          why_answers: whyAnswers,
+          strongest_desire_index: strongestDesire,
+          strongest_desire_text: strongestDesire !== null ? whyAnswers[strongestDesire - 1] : null,
+          discomfort_origin: discomfortOrigin,
+          fear_description: fearDescription,
+          pre_fear_level: preFearLevel,
+          post_fear_level: postFearLevel,
+          total_points: totalPoints,
+          action_plans: actionPlans.map(plan => `いつ: ${plan.when}, どこで: ${plan.where}, どんなことが起こる: ${plan.what}`),
+          enjoyment_rating: enjoymentRating,
+          improvement_rating: improvementRating,
+        }),
       })
+      console.log("データが正常に保存されました")
+    } catch {
+      console.error("データの保存に失敗しました")
     }
 
     setGameState("result")
@@ -3837,7 +3914,7 @@ const ExposeGame = () => {
 
   return (
     <AnimatePresence mode="wait">
-      {gameState === "intro" && <IntroPage key="intro" onStart={() => setGameState("exposureQuiz")} isMuted={isMuted} setIsMuted={setIsMuted} />}
+      {gameState === "intro" && <IntroPage key="intro" onStart={() => setGameState("exposureQuiz")} isMuted={isMuted} setIsMuted={setIsMuted} theme={currentTheme} />}
       {gameState === "exposureQuiz" && (
         <ExposureQuizPage
           key="exposureQuiz"
@@ -3873,6 +3950,7 @@ const ExposeGame = () => {
           onComplete={handleProfileSetupComplete}
           onExit={handleDirectToAffiliate}
           isMuted={isMuted}
+          theme={currentTheme}
         />
       )}
       {gameState === "action" && (
@@ -3888,6 +3966,7 @@ const ExposeGame = () => {
           onFieldComplete={handleFieldComplete}
           isMuted={isMuted}
           strongestDesireText={strongestDesireText}
+          theme={currentTheme}
         />
       )}
       {gameState === "quizReview" && (
@@ -3922,6 +4001,7 @@ const ExposeGame = () => {
           onAddPoints={handleAddPoints}
           onExit={handleDirectToAffiliate}
           strongestDesireText={strongestDesireText}
+          fearDescription={fearDescription}
           isMuted={isMuted}
         />
       )}

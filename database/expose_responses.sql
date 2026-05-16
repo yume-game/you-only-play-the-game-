@@ -52,7 +52,7 @@ CREATE INDEX idx_expose_responses_session_id ON expose_responses(session_id);
 
 ALTER TABLE expose_responses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public insert" ON expose_responses FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public select" ON expose_responses FOR SELECT USING (true);
+-- SELECTポリシーは付与しない。anon keyで全件読み取りを防ぐため。
 
 -- ============================================================
 -- 更新トリガー

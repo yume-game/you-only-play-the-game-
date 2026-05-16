@@ -16,7 +16,15 @@
       "Bash(where:*)",
       "Bash(ffmpeg:*)",
       "Bash(find:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(vercel:*)",
+      "Bash(Get-ChildItem -Path \"c:\\\\first-project\\\\Projects\\\\quiz-app\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(ConvertTo-Csv -NoTypeInformation)",
+      "Bash(Measure-Object -Line)",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && wc -l \"{}\"')",
+      "Bash(xargs wc -l)",
+      "Bash(Get-ChildItem -Path \"database\" -Name)"
     ],
     "deny": [],
     "ask": []

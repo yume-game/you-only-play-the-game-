@@ -50,7 +50,7 @@ Step 4: RLS設定（別々に実行）
 
 ALTER TABLE thanks_responses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public insert" ON thanks_responses FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public select" ON thanks_responses FOR SELECT USING (true);
+-- SELECTポリシーは付与しない。anon keyで全件読み取りを防ぐため。
 */
 
 -- テーブルとカラムのコメント
@@ -103,7 +103,7 @@ Step 6: affiliate_clicksテーブルのRLS設定（別々に実行）
 
 ALTER TABLE affiliate_clicks ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public insert" ON affiliate_clicks FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public select" ON affiliate_clicks FOR SELECT USING (true);
+-- SELECTポリシーは付与しない。anon keyで全件読み取りを防ぐため。
 */
 
 -- テーブルとカラムのコメント

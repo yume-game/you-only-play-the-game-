@@ -48,6 +48,22 @@ export function TermsOfService({ isOpen, onClose }: TermsOfServiceProps) {
             </section>
 
             <section>
+              <h3 className="text-lg font-bold mb-2">第2条 データの保存</h3>
+              <p className="mb-2">
+                当社は、本サービスの提供にあたり、利用者の入力データおよび利用データを外部クラウドデータベース（Supabase等）に保存することがあります。
+              </p>
+              <p className="mb-2">保存されるデータには以下が含まれます：</p>
+              <ul className="list-disc list-inside ml-4 space-y-1">
+                <li>ゲーム内で入力された回答やテキストデータ</li>
+                <li>サービス利用履歴および操作ログ</li>
+                <li>広告のクリック情報</li>
+              </ul>
+              <p className="mt-2">
+                利用者が本サービスを利用した時点で、上記データの保存に同意したものとみなします。
+              </p>
+            </section>
+
+            <section>
               <h3 className="text-lg font-bold mb-2">第4条 サービス提供に関する免責事項</h3>
               <p className="mb-2">
                 本サービスは、利用者の心の状態の「気づき」や「内省」を促すことを目的としたセルフケア支援ツールであり、いかなる病気や症状の「治療」「治癒」「改善」を保証するものではありません。

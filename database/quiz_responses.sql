@@ -50,7 +50,8 @@ Step 4: RLS設定（別々に実行）
 
 ALTER TABLE quiz_responses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public insert" ON quiz_responses FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public select" ON quiz_responses FOR SELECT USING (true);
+-- SELECTポリシーは付与しない。anon keyで全件読み取りを防ぐため。
+-- 管理者はSupabaseダッシュボード（service role）で閲覧する。
 */
 
 -- テーブルとカラムのコメント

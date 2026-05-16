@@ -5,16 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { createClient } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import ConfettiCanvas from "@/components/animations/ConfettiCanvas"
 import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
-
-// Supabaseクライアントの設定（Selfworth用プロジェクト）
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
 
 // 行動セットの型定義
 type ActionSet = {
@@ -121,7 +114,6 @@ const AffiliateComponent = ({ className = "" }: { className?: string }) => {
 // スタート画面
 const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMuted: boolean; setIsMuted: (value: boolean) => void }) => {
   const [isTermsOpen, setIsTermsOpen] = useState(false)
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -129,6 +121,7 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
 
   return (
     <div className="relative w-full h-screen flex flex-col items-center justify-center animate-fade-in">
+      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-green-100 via-green-200 to-green-300"></div>
 
       <div className="relative z-10 text-center space-y-6 bg-green-700 bg-opacity-70 p-8 rounded-lg max-w-2xl">
@@ -157,37 +150,18 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-center space-x-3">
-            <button
-              onClick={() => setIsTermsOpen(true)}
-              className="text-white underline hover:text-green-200 transition-colors"
-            >
-              利用規約を読む
-            </button>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="w-8 h-8 rounded-full border-2 border-white cursor-pointer transition-all duration-300 hover:scale-125 hover:border-green-300 checked:scale-110 checked:bg-green-400"
-              />
-              <span className="text-white">利用規約に同意する</span>
-            </label>
-          </div>
+          <p className="text-white/70 text-sm text-center">
+            スタートボタンをおすと、<button type="button" onClick={() => setIsTermsOpen(true)} className="text-green-300 underline hover:text-green-200 font-medium">利用規約</button>に同意したことになります。
+          </p>
 
           <Button
             onClick={onStart}
-            disabled={!agreedToTerms}
-            className={`bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white ${
-              !agreedToTerms ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className="bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white"
           >
             ゲームを始める
           </Button>
         </div>
       </div>
-
-      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </div>
   )
 }
@@ -951,7 +925,23 @@ const LogicGame = () => {
       }
     }
 
+    // タブの可視性変更時にBGMを制御
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (bgmRef.current) {
+          bgmRef.current.pause()
+        }
+      } else {
+        if (shouldPlayBgm && !isMuted && bgmRef.current) {
+          bgmRef.current.play().catch(console.error)
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
       if (bgmRef.current) {
         bgmRef.current.pause()
       }
@@ -968,23 +958,23 @@ const LogicGame = () => {
     setGameState("survey")
   }
 
-  const handleSurveySubmit = () => {
-    // Supabaseにデータを保存
-    if (supabase) {
-      supabase.from("logic_game_responses_v2").insert({
-        score,
-        action_sets: actionSets.filter(set =>
-          set.action.trim() && set.notDoReason1.trim() && set.notDoReason2.trim() && set.doReason.trim() && set.benefit.trim()
-        ).map(set => `行動: ${set.action}, やらない理由1: ${set.notDoReason1}, やらない理由2: ${set.notDoReason2}, やる理由: ${set.doReason}, 得: ${set.benefit}`),
-        enjoyment_rating: enjoymentRating,
-        improvement_rating: improvementRating
-      }).then(({ error }) => {
-        if (error) {
-          console.error("データの保存に失敗しました:", error)
-        } else {
-          console.log("データが正常に保存されました")
-        }
+  const handleSurveySubmit = async () => {
+    // APIルートにデータを保存
+    try {
+      await fetch("/api/logic-responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          score,
+          action_sets: actionSets.filter(set =>
+            set.action.trim() && set.notDoReason1.trim() && set.notDoReason2.trim() && set.doReason.trim() && set.benefit.trim()
+          ).map(set => `行動: ${set.action}, やらない理由1: ${set.notDoReason1}, やらない理由2: ${set.notDoReason2}, やる理由: ${set.doReason}, 得: ${set.benefit}`),
+          enjoyment_rating: enjoymentRating,
+          improvement_rating: improvementRating,
+        }),
       })
+    } catch {
+      console.error("データの保存に失敗しました")
     }
 
     setGameState("result")

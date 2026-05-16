@@ -4,22 +4,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { createClient } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import ConfettiCanvas from "@/components/animations/ConfettiCanvas"
 import DarkAnimationCanvas from "@/components/animations/DarkAnimationCanvas"
 import ButtonAnimationCanvas from "@/components/animations/ButtonAnimationCanvas"
 import TransitionCanvas from "@/components/animations/TransitionCanvas"
 import { TermsOfService } from "@/components/terms-of-service/terms-of-service"
-
-// Supabaseクライアントの設定（Selfworth用プロジェクト）
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
-
-
-// const supabase = createClientComponentClient()
 
 // デバイス判定のカスタムフック
 const useIsMobile = () => {
@@ -47,11 +37,56 @@ type Quiz = {
   }
 }
 
-// 行動プランの型定義（anyを使わない）
+// 行動プランの型定義（expose.tsx形式に変更）
 type ActionPlan = {
-  when: string        // いつ？
-  action: string      // どんな行動？
-  motivation: string  // なぜ？
+  when: string        // いつ
+  where: string       // どこで
+  what: string        // 何をする
+}
+
+// 行動プランのステップ
+type ActionStep = 'when' | 'where' | 'what' | 'confirmation'
+
+// 動画ファイルリスト
+const CAT_VIDEOS = [
+  '/movie_output/second_half_animecat.mp4',
+  '/movie_output/second_half_bangocat.mp4',
+  '/movie_output/second_half_fatcat.mp4',
+]
+
+// 効果音再生用のカスタムフック
+const useInteractionSounds = (isMuted: boolean) => {
+  const typingAudioRef = useRef<HTMLAudioElement | null>(null)
+  const hoverAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  const playTyping = useCallback(() => {
+    if (isMuted) return
+    if (!typingAudioRef.current) {
+      typingAudioRef.current = new Audio('/sound/typing.mp3')
+      typingAudioRef.current.volume = 0.3
+    }
+    typingAudioRef.current.currentTime = 0
+    typingAudioRef.current.play().catch(() => {})
+  }, [isMuted])
+
+  const playClick = useCallback(() => {
+    if (isMuted) return
+    const audio = new Audio('/sound/typing.mp3')
+    audio.volume = 0.4
+    audio.play().catch(() => {})
+  }, [isMuted])
+
+  const playHover = useCallback(() => {
+    if (isMuted) return
+    if (!hoverAudioRef.current) {
+      hoverAudioRef.current = new Audio('/sound/typing.mp3')
+      hoverAudioRef.current.volume = 0.15
+    }
+    hoverAudioRef.current.currentTime = 0
+    hoverAudioRef.current.play().catch(() => {})
+  }, [isMuted])
+
+  return { playTyping, playClick, playHover }
 }
 
 const quizzes: Quiz[] = [
@@ -288,6 +323,162 @@ const ImagePreloader = ({ images, onComplete }: { images: string[]; onComplete: 
   )
 }
 
+// ローディングページ（黄緑色基調）- BGMプリロード機能付き
+const LoadingPage = ({ onLoadComplete }: { onLoadComplete: () => void }) => {
+  const [progress, setProgress] = useState(0)
+  const [loadingText, setLoadingText] = useState('準備中...')
+  const [audioLoaded, setAudioLoaded] = useState(false)
+
+  const loadingMessages = [
+    '準備中...',
+    'BGMを読み込んでいます...',
+    '効果音を準備中...',
+    '完了間近です...',
+  ]
+
+  // プリロードする音声ファイル
+  const audioFiles = [
+    '/sound/gamebgmchild.mp3',  // メインBGM
+    '/sound/nextpage.mp3',      // ページ遷移音
+    '/sound/typing.mp3',        // タイピング音
+    '/sound/100pt.mp3',         // ポイント音
+    '/sound/point.mp3',         // 結果音
+    '/sound/timeup.mp3',        // タイムアップ音
+  ]
+
+  useEffect(() => {
+    let loadedCount = 0
+    const totalFiles = audioFiles.length
+
+    // 音声ファイルをプリロード
+    const preloadAudio = () => {
+      audioFiles.forEach((src) => {
+        const audio = new Audio()
+        audio.preload = 'auto'
+        audio.src = src
+        audio.addEventListener('canplaythrough', () => {
+          loadedCount++
+          setProgress((prev) => Math.min(prev + (70 / totalFiles), 70))
+          if (loadedCount >= totalFiles) {
+            setAudioLoaded(true)
+          }
+        }, { once: true })
+        audio.addEventListener('error', () => {
+          loadedCount++
+          if (loadedCount >= totalFiles) {
+            setAudioLoaded(true)
+          }
+        }, { once: true })
+        // 読み込み開始
+        audio.load()
+      })
+    }
+
+    preloadAudio()
+
+    // ローディングメッセージの切り替え
+    const messageInterval = setInterval(() => {
+      setLoadingText((prev) => {
+        const currentIndex = loadingMessages.indexOf(prev)
+        const nextIndex = (currentIndex + 1) % loadingMessages.length
+        return loadingMessages[nextIndex]
+      })
+    }, 800)
+
+    return () => {
+      clearInterval(messageInterval)
+    }
+  }, [])
+
+  // 音声ファイルがすべて読み込まれたらローディング完了
+  useEffect(() => {
+    if (audioLoaded) {
+      setProgress(100)
+      const timer = setTimeout(() => {
+        onLoadComplete()
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [audioLoaded, onLoadComplete])
+
+  // フォールバック: 5秒経っても完了しない場合は強制的に完了
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      if (!audioLoaded) {
+        setProgress(100)
+        setTimeout(() => {
+          onLoadComplete()
+        }, 500)
+      }
+    }, 5000)
+
+    return () => clearTimeout(fallbackTimer)
+  }, [audioLoaded, onLoadComplete])
+
+  return (
+    <div className="fixed inset-0 bg-gradient-to-br from-lime-400 via-green-400 to-emerald-500 flex flex-col items-center justify-center z-50">
+      {/* 背景の装飾 */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-white/20 animate-pulse"
+            style={{
+              width: Math.random() * 100 + 50,
+              height: Math.random() * 100 + 50,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 2}s`,
+              animationDuration: `${Math.random() * 3 + 2}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* メインコンテンツ */}
+      <div className="relative z-10 flex flex-col items-center">
+        {/* ロゴ/アイコン */}
+        <div className="mb-8">
+          <div className="w-24 h-24 bg-white/30 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center animate-bounce">
+              <span className="text-4xl">💎</span>
+            </div>
+          </div>
+        </div>
+
+        {/* タイトル */}
+        <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">
+          自分らしさ発見
+        </h1>
+        <p className="text-white/80 mb-8 text-lg">心の回復ゲーム</p>
+
+        {/* プログレスバー */}
+        <div className="w-64 h-3 bg-white/30 rounded-full overflow-hidden backdrop-blur-sm shadow-inner">
+          <div
+            className="h-full bg-white rounded-full transition-all duration-300 ease-out shadow-md"
+            style={{ width: `${Math.min(progress, 100)}%` }}
+          />
+        </div>
+
+        {/* パーセンテージ */}
+        <p className="mt-4 text-white font-bold text-xl drop-shadow">
+          {Math.min(Math.round(progress), 100)}%
+        </p>
+
+        {/* ローディングメッセージ */}
+        <p className="mt-2 text-white/90 text-sm animate-pulse">
+          {loadingText}
+        </p>
+
+        {/* スピナー */}
+        <div className="mt-6">
+          <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const AffiliateComponent = ({ className = "", affiliateTextPattern, onAffiliateClick }: { className?: string; affiliateTextPattern?: { headline: string; description: string }; onAffiliateClick?: () => void }) => {
   const affiliateHtml = `<a href="https://px.a8.net/svt/ejp?a8mat=45167E+679KMQ+5OI8+5ZEMP" rel="nofollow">
 <img border="0" width="300" height="250" alt="" src="https://www27.a8.net/svt/bgt?aid=250317482375&wid=001&eno=01&mid=s00000026504001005000&mc=1"></a>
@@ -391,7 +582,6 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
   const [isMobile, setIsMobile] = useState(false)
   const [allImages, setAllImages] = useState<string[]>([])
   const [isTermsOpen, setIsTermsOpen] = useState(false)
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   // ページマウント時に上までスクロール
   useEffect(() => {
@@ -418,6 +608,7 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
 
   return (
     <div className="relative w-full h-screen flex flex-col items-center justify-center animate-fade-in">
+      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
       <div className="absolute inset-0 z-0">
         <Image
           src="/image/background-bright-forest-road.png"
@@ -473,37 +664,19 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
           <div className="text-white text-lg">デバイスを確認中...</div>
         ) : (
           <>
-            {/* 利用規約セクション */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-center space-x-3">
-                <button
-                  onClick={() => setIsTermsOpen(true)}
-                  className="text-white underline hover:text-green-200 transition-colors"
-                >
-                  利用規約
-                </button>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="w-8 h-8 rounded-full border-2 border-white cursor-pointer transition-all duration-300 hover:scale-125 hover:border-green-300 checked:scale-110 checked:bg-green-400"
-                  />
-                  <span className="text-white">同意する</span>
-                </label>
-              </div>
+            {/* 注意書き */}
+            <p className="text-red-300 text-sm text-center mb-4">
+              重度のトラウマなどお持ちの方は私のゲームではなく、精神科医にかかる事を推奨いたします
+            </p>
 
-              {/* 注意書き */}
-              <p className="text-red-300 text-sm text-center mb-4">
-                重度のトラウマなどお持ちの方は私のゲームではなく、精神科医にかかる事を推奨いたします
+            <div className="space-y-4">
+              <p className="text-white/70 text-sm text-center">
+                スタートボタンをおすと、<button type="button" onClick={() => setIsTermsOpen(true)} className="text-green-300 underline hover:text-green-200 font-medium">利用規約</button>に同意したことになります。
               </p>
 
               <Button
                 onClick={onStart}
-                disabled={!agreedToTerms}
-                className={`bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white ${
-                  !agreedToTerms ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className="bg-gradient-to-r from-green-500 to-green-700 hover:opacity-90 transition-opacity px-8 py-4 text-xl text-white"
               >
                 スタート
               </Button>
@@ -511,9 +684,6 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
           </>
         )}
       </div>
-
-      {/* 利用規約ポップアップ */}
-      <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
 
       {/* 初期画像のみプリロード */}
       <div className="absolute -top-full opacity-0 pointer-events-none">
@@ -1136,25 +1306,21 @@ const QuizPage = ({
                     if (target.tagName === 'A' || target.closest('a')) {
                       console.log("QuizPage: アフィリエイト画像がクリックされました")
                       // アフィリエイトクリックを新テーブルに記録
-                      if (supabase) {
-                        supabase.from("affiliate_clicks").insert({
-                          user_id: userId,
-                          session_id: sessionId,
-                          game_name: "selfworth",
-                          gender: gender || null,
-                          age_group: ageGroup || null,
-                          enjoyment_rating: null,
-                          improvement_rating: null,
-                          affiliate_clicked: true,
-                          affiliate_pattern_index: null,
-                        }).then(({ error }) => {
-                          if (error) {
-                            console.error("アフィリエイトクリックの記録に失敗:", error)
-                          } else {
-                            console.log("QuizPageからのアフィリエイトクリックが記録されました")
-                          }
-                        })
-                      }
+                        fetch("/api/affiliate-click", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            game_name: "selfworthrelative",
+                            user_id: userId,
+                            session_id: sessionId,
+                            gender: gender || null,
+                            age_group: ageGroup || null,
+                            enjoyment_rating: null,
+                            improvement_rating: null,
+                            affiliate_clicked: true,
+                            affiliate_pattern_index: null,
+                          }),
+                        }).catch(() => {})
                     }
                   }}
                 >
@@ -1172,26 +1338,28 @@ const QuizPage = ({
                     onClick={async () => {
                       console.log("QuizPage: 終えるボタンがクリックされました")
                       // ゲームデータをquiz_responses_v2に送信（完了を待ってから遷移）
-                      if (supabase) {
+                      try {
                         const currentAnswers = userAnswers.filter((answer) => answer.trim() !== "")
                         const allAnswers = [...allUserAnswers, currentAnswers].flat()
-                        const { error } = await supabase.from("quiz_responses_v2").insert({
-                          user_id: userId,
-                          session_id: sessionId,
-                          total_points: totalPoints,
-                          selected_values: allAnswers,
-                          action_plans: [],
-                          gender: gender,
-                          age_group: ageGroup,
-                          enjoyment_rating: null,
-                          improvement_rating: null,
+                        await fetch("/api/responses", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            table: "quiz_responses_v2",
+                            user_id: userId,
+                            session_id: sessionId,
+                            total_points: totalPoints,
+                            selected_values: allAnswers,
+                            action_plans: [],
+                            gender: gender,
+                            age_group: ageGroup,
+                            enjoyment_rating: null,
+                            improvement_rating: null,
+                          }),
                         })
-                        if (error) {
-                          console.error("データの保存に失敗:", error)
-                        } else {
-                          console.log("終えるボタンからのデータが保存されました")
-                          onSetHasSubmittedGameData(true)
-                        }
+                        onSetHasSubmittedGameData(true)
+                      } catch {
+                        console.error("データの保存に失敗")
                       }
                       onDirectToAffiliate()
                     }}
@@ -1336,29 +1504,26 @@ const ResultPage = ({
     if (hasSubmittedGameData) return
 
     const saveGameData = async () => {
-      if (!supabase) return
-
       try {
-        const { error } = await supabase.from("quiz_responses_v2").insert({
-          user_id: userId,
-          session_id: sessionId,
-          total_points: totalPoints,
-          selected_values: selectedAnswers,
-          action_plans: actionPlans.map(plan => plan.action).filter(action => action.trim() !== ""),
-          gender: gender,
-          age_group: ageGroup,
-          enjoyment_rating: null,
-          improvement_rating: null,
+        await fetch("/api/responses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            table: "quiz_responses_v2",
+            user_id: userId,
+            session_id: sessionId,
+            total_points: totalPoints,
+            selected_values: selectedAnswers,
+            action_plans: actionPlans.map(plan => plan.what).filter(what => what.trim() !== ""),
+            gender: gender,
+            age_group: ageGroup,
+            enjoyment_rating: null,
+            improvement_rating: null,
+          }),
         })
-
-        if (error) {
-          console.error("ゲームデータの自動保存に失敗:", error)
-        } else {
-          console.log("ゲームデータが自動保存されました")
-          onSetHasSubmittedGameData(true)
-        }
-      } catch (err) {
-        console.error("データ保存中にエラーが発生:", err)
+        onSetHasSubmittedGameData(true)
+      } catch {
+        console.error("ゲームデータの自動保存に失敗")
       }
     }
 
@@ -1371,33 +1536,27 @@ const ResultPage = ({
 
     setIsSubmitting(true)
 
-    if (supabase) {
-      try {
-        // アンケートデータをaffiliate_clicksに保存
-        const { error: affiliateError } = await supabase.from("affiliate_clicks").insert({
+    try {
+      await fetch("/api/affiliate-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game_name: "selfworthrelative",
           user_id: userId,
           session_id: sessionId,
-          game_name: "selfworth",
           gender: gender || null,
           age_group: ageGroup || null,
           enjoyment_rating: enjoymentRating,
           improvement_rating: improvementRating,
           affiliate_clicked: false,
           affiliate_pattern_index: affiliatePatternIndex,
-        })
-
-        if (affiliateError) {
-          console.error("アンケートデータの保存に失敗:", affiliateError)
-        } else {
-          console.log("アンケートデータが保存されました")
-        }
-
-        setHasSubmitted(true)
-      } catch (err) {
-        console.error("データ保存中にエラーが発生:", err)
-      }
+        }),
+      })
+    } catch {
+      console.error("アンケートデータの保存に失敗")
     }
 
+    setHasSubmitted(true)
     setIsSubmitting(false)
   }
 
@@ -1419,8 +1578,21 @@ const ResultPage = ({
       const shouldRedirect = true
       const redirectUrl = clickData?.url
 
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL_SELFWORTH || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_SELFWORTH) {
-        console.log("Supabase環境変数が設定されていないため、データ保存をスキップします")
+      fetch("/api/affiliate-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game_name: "selfworthrelative",
+          user_id: userId,
+          session_id: sessionId,
+          gender: gender || null,
+          age_group: ageGroup || null,
+          enjoyment_rating: enjoymentRating,
+          improvement_rating: improvementRating,
+          affiliate_clicked: true,
+          affiliate_pattern_index: affiliatePatternIndex,
+        }),
+      }).catch(() => {}).finally(() => {
         setHasSubmitted(true)
         setIsSubmitting(false)
 
@@ -1429,35 +1601,7 @@ const ResultPage = ({
             window.open(redirectUrl, "_blank")
           }, 200)
         }
-      } else {
-        supabase!.from("affiliate_clicks").insert({
-          user_id: userId,
-          session_id: sessionId,
-          game_name: "selfworth",
-          gender: gender || null,
-          age_group: ageGroup || null,
-          enjoyment_rating: enjoymentRating,
-          improvement_rating: improvementRating,
-          affiliate_clicked: true,
-          affiliate_pattern_index: affiliatePatternIndex,
-        }).then(({ error }) => {
-          if (error) {
-            console.error("アフィリエイトクリックの記録に失敗:", error)
-          } else {
-            console.log("アフィリエイトクリックが記録されました")
-          }
-
-          setHasSubmitted(true)
-          setIsSubmitting(false)
-
-          // データ送信完了後（成功・失敗問わず）にアフィリエイトリンクに遷移
-          if (shouldRedirect && redirectUrl) {
-            setTimeout(() => {
-              window.open(redirectUrl, "_blank")
-            }, 200)
-          }
-        })
-      }
+      })
     },
     [isSubmitting, hasSubmitted, userId, sessionId, gender, ageGroup, enjoymentRating, improvementRating, affiliatePatternIndex],
   )
@@ -1557,10 +1701,10 @@ const ResultPage = ({
                             <span className="font-bold text-blue-700">いつ:</span> {plan.when || "未入力"}
                           </p>
                           <p className="text-gray-700 mb-1">
-                            <span className="font-bold text-blue-700">行動:</span> {plan.action || "未入力"}
+                            <span className="font-bold text-blue-700">どこで:</span> {plan.where || "未入力"}
                           </p>
                           <p className="text-gray-700">
-                            <span className="font-bold text-blue-700">なぜ:</span> {plan.motivation || "未入力"}
+                            <span className="font-bold text-blue-700">何を:</span> {plan.what || "未入力"}
                           </p>
                         </div>
                       </div>
@@ -1642,27 +1786,21 @@ const ResultPage = ({
                 className="mx-auto"
                 affiliateTextPattern={affiliateTextPattern}
                 onAffiliateClick={() => {
-                  console.log("アフィリエイトリンクがクリックされました")
-                  // アフィリエイトクリックを新テーブルに記録
-                  if (supabase) {
-                    supabase.from("affiliate_clicks").insert({
+                  fetch("/api/affiliate-click", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      game_name: "selfworthrelative",
                       user_id: userId,
                       session_id: sessionId,
-                      game_name: "selfworth",
                       gender: gender || null,
                       age_group: ageGroup || null,
                       enjoyment_rating: enjoymentRating,
                       improvement_rating: improvementRating,
                       affiliate_clicked: true,
                       affiliate_pattern_index: affiliatePatternIndex,
-                    }).then(({ error }) => {
-                      if (error) {
-                        console.error("アフィリエイトクリックの記録に失敗:", error)
-                      } else {
-                        console.log("アフィリエイトクリックが記録されました")
-                      }
-                    })
-                  }
+                    }),
+                  }).catch(() => {})
                 }}
               />
             </div>
@@ -1808,7 +1946,7 @@ const SummaryPage = ({
   )
 }
 
-// 行動プランページ（ActionPlanPage）
+// 行動プランページ（Duolingoライクな新UI - expose.tsx形式）
 const ActionPlanPage = ({
   selectedAnswers,
   actionPlans,
@@ -1816,333 +1954,471 @@ const ActionPlanPage = ({
   setTotalPoints,
   onActionPlanAdd,
   onComplete,
-  onTimeUp,
   onExit,
   onFieldComplete,
+  isMuted,
 }: {
   selectedAnswers: string[]
   actionPlans: ActionPlan[]
   totalPoints: number
   setTotalPoints: (value: number | ((prev: number) => number)) => void
-  onActionPlanAdd: (when: string, action: string, motivation: string) => void
+  onActionPlanAdd: (when: string, where: string, what: string) => void
   onComplete: () => void
-  onTimeUp: () => void
   onExit: () => void
   onFieldComplete: () => void
+  isMuted: boolean
 }) => {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+
+  // ランダムな動画を選択（コンポーネントマウント時に一度だけ）
+  const [selectedVideo] = useState(() => CAT_VIDEOS[Math.floor(Math.random() * CAT_VIDEOS.length)])
+  // 動画再生状態
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
-  const [currentPlan, setCurrentPlan] = useState<ActionPlan>({ when: "", action: "", motivation: "" })
+  // 説明ページ表示状態
+  const [showIntro, setShowIntro] = useState(true)
+
+  // ステップ管理
+  const [currentStep, setCurrentStep] = useState<ActionStep>('when')
+  const [currentLevel, setCurrentLevel] = useState(actionPlans.length + 1)
+
+  // 回答管理
+  const [customInput, setCustomInput] = useState('')
+
+  // 現在の行動プラン
+  const [currentPlan, setCurrentPlan] = useState<ActionPlan>({ when: '', where: '', what: '' })
+
+  // アニメーション
   const [showConfetti, setShowConfetti] = useState(false)
-  const [showDarkAnimation, setShowDarkAnimation] = useState(false)
-  const getInitialTime = () => Math.max(10, 40 - (actionPlans.length * 3))
-  const [timeLeft, setTimeLeft] = useState(getInitialTime())
-  const [timeUpCount, setTimeUpCount] = useState(0)
-  const [completedFields, setCompletedFields] = useState<Set<string>>(new Set())
-  const [fieldAnimations, setFieldAnimations] = useState<{ [key: string]: boolean }>({})
-  const [animationTimer, setAnimationTimer] = useState<NodeJS.Timeout | null>(null)
+  const [currentPoints, setCurrentPoints] = useState(0)
 
-  // タイマーの色
-  const getTimeColor = (timeLeft: number, timeUpCount: number) => {
-    if (timeLeft <= 10) return "text-red-500 font-bold"
-    if (timeUpCount === 0) return "text-green-500"
-    if (timeUpCount === 1) return "text-amber-800"
-    if (timeUpCount === 2) return "text-orange-700"
-    if (timeUpCount === 3) return "text-red-700"
-    if (timeUpCount >= 4) return "text-red-600"
-    return "text-green-500"
+  // 効果音フック
+  const { playTyping, playClick } = useInteractionSounds(isMuted)
+
+  // 効果音再生
+  const playSound = useCallback((soundFile: string) => {
+    if (isMuted) return
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+    audioRef.current = new Audio(soundFile)
+    audioRef.current.volume = 0.5
+    audioRef.current.play().catch(() => {})
+  }, [isMuted])
+
+  // プログレス計算（3ステップ）
+  const getProgress = () => {
+    if (currentStep === 'when') return 33
+    if (currentStep === 'where') return 66
+    if (currentStep === 'what') return 100
+    return 100
   }
 
-  // タイマー
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(timer)
-          setTimeUpCount((prev) => prev + 1)
-          setShowDarkAnimation(true)
-          onTimeUp()
+  // 回答を送信
+  const handleSubmit = () => {
+    const answer = customInput
+    if (!answer.trim()) return
 
-          setTimeout(() => {
-            setShowDarkAnimation(false)
-          }, 1000)
+    // ポイント計算（すべて記述式なので300pt）
+    let points = 300
 
-          setTimeout(() => {
-            setTimeLeft(40)
-          }, 100)
+    // ポイント追加
+    setTotalPoints((prev) => prev + points)
+    setCurrentPoints(points)
+    onFieldComplete()
 
-          return 0
-        }
-        return prevTime - 1
-      })
-    }, 1000)
+    // サウンド再生
+    playSound('/sound/100pt.mp3')
 
-    return () => clearInterval(timer)
-  }, [onTimeUp])
+    // アニメーション表示
+    setShowConfetti(true)
+    setTimeout(() => setShowConfetti(false), 1500)
 
-  const handleInputChange = (field: keyof ActionPlan, value: string) => {
-    const previousValue = currentPlan[field] || ""
-    setCurrentPlan((prev) => ({ ...prev, [field]: value }))
-
-    // 入力が完了した時（空から文字が入力された時）に草エフェクト
-    if (previousValue === "" && value.trim() !== "") {
-      const animationKey = `field-${field}`
-      setFieldAnimations((prev) => ({ ...prev, [animationKey]: true }))
-
-      // 既存のタイマーをクリア
-      if (animationTimer) {
-        clearTimeout(animationTimer)
+    // 動画再生を開始
+    const playVideo = () => {
+      setIsVideoPlaying(true)
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0
+        videoRef.current.play().catch(() => {})
       }
-
-      // 新しいタイマーを設定
-      const newTimer = setTimeout(() => {
-        setFieldAnimations((prev) => {
-          const newAnimations = { ...prev }
-          delete newAnimations[animationKey]
-          return newAnimations
-        })
-      }, 1000)
-      setAnimationTimer(newTimer)
     }
-  }
 
-  const handleAdd = () => {
-    if (currentPlan.when.trim() || currentPlan.action.trim() || currentPlan.motivation.trim()) {
-      onActionPlanAdd(currentPlan.when, currentPlan.action, currentPlan.motivation)
-      setCurrentPlan({ when: "", action: "", motivation: "" })
-      setShowConfetti(true)
-      setTimeLeft(40) // タイマーリセット
+    // 現在のプランを更新
+    if (currentStep === 'when') {
+      setCurrentPlan((prev) => ({ ...prev, when: answer }))
       setTimeout(() => {
-        setShowConfetti(false)
+        playVideo()
+        setCurrentStep('where')
+        setCustomInput('')
+      }, 1000)
+    } else if (currentStep === 'where') {
+      setCurrentPlan((prev) => ({ ...prev, where: answer }))
+      setTimeout(() => {
+        playVideo()
+        setCurrentStep('what')
+        setCustomInput('')
+      }, 1000)
+    } else if (currentStep === 'what') {
+      const finalPlan = { ...currentPlan, what: answer }
+      setCurrentPlan(finalPlan)
+      setTimeout(() => {
+        playVideo()
+        setCurrentStep('confirmation')
       }, 1000)
     }
   }
 
-  const hasValidPlan = currentPlan.when.trim() !== "" || currentPlan.action.trim() !== "" || currentPlan.motivation.trim() !== ""
+  // レベルを追加してリセット
+  const handleAddLevel = () => {
+    // 現在のプランを保存
+    onActionPlanAdd(currentPlan.when, currentPlan.where, currentPlan.what)
 
-  return (
-    <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in">
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/image/background-bright-forest-road.png"
-          alt="行動プラン背景"
-          fill
-          className="object-cover object-top"
-          priority
-          onError={(e) => {
-            const target = e.target as HTMLImageElement
-            target.style.display = 'none'
-            const parent = target.parentElement
-            if (parent && !parent.querySelector('.image-fallback')) {
-              const fallback = document.createElement('div')
-              fallback.className = 'image-fallback absolute inset-0 flex items-center justify-center'
-              fallback.innerHTML = '<div class="w-32 h-32 rounded-full bg-green-400"></div>'
-              parent.appendChild(fallback)
-            }
-          }}
-        />
-      </div>
+    // 状態をリセット
+    setCurrentLevel((prev) => prev + 1)
+    setCurrentStep('when')
+    setCurrentPlan({ when: '', where: '', what: '' })
+    setCustomInput('')
+  }
 
-      {/* Confetti Canvas Animation */}
-      <ConfettiCanvas
-        isActive={showConfetti}
-        duration={1000}
-        particleCount={50}
-        points={
-          completedFields.has("when") && !completedFields.has("action")
-            ? 100
-            : completedFields.has("action") && completedFields.size === 2
-              ? 200
-              : 300
-        }
-      />
+  // 完了して次へ進む
+  const handleProceedToComplete = () => {
+    // まだ保存していないプランがあれば保存
+    if (currentPlan.when || currentPlan.where || currentPlan.what) {
+      onActionPlanAdd(currentPlan.when, currentPlan.where, currentPlan.what)
+    }
+    onComplete()
+  }
 
-      {/* Dark Animation Canvas - タイムアップ時 */}
-      <DarkAnimationCanvas isActive={showDarkAnimation} duration={1000} />
+  // 終了してアフィリエイトページへ
+  const handleExitToAffiliate = () => {
+    window.open('https://px.a8.net/svt/ejp?a8mat=45167E+679KMQ+5OI8+BW8O2&a8ejpredirect=https%3A%2F%2Fkimochi-mental.com%2Fclient%2Fhome', '_blank')
+    onExit()
+  }
 
-      <div className="relative z-10 max-w-3xl w-full space-y-6">
-        <div className="bg-white bg-opacity-95 rounded-xl p-8 shadow-2xl">
-          {/* ヘッダー */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="text-green-600 text-lg font-medium">行動プラン作成</div>
-            <div className={`text-2xl font-bold ${getTimeColor(timeLeft, timeUpCount)}`}>
-              ⏱️残り時間: {timeLeft}秒
-            </div>
-            <div className="text-green-600 text-3xl font-bold">🏆{totalPoints}pt</div>
+  // 吹き出しテキストを取得
+  const getBubbleText = () => {
+    if (currentStep === 'when') return 'いつする行動？'
+    if (currentStep === 'where') return 'どこでする行動？'
+    if (currentStep === 'what') return '何をする？'
+    return ''
+  }
+
+  // プレースホルダーを取得
+  const getPlaceholder = () => {
+    if (currentStep === 'when') return '例：朝起きたとき、仕事終わりに、週末に...'
+    if (currentStep === 'where') return '例：自宅で、カフェで、公園で...'
+    if (currentStep === 'what') return '例：感謝の気持ちを書く、瞑想する...'
+    return ''
+  }
+
+  // 完了したレベル数
+  const completedLevels = actionPlans.length
+
+  // 説明ページ（行動リスト開始前）
+  if (showIntro) {
+    return (
+      <div className="relative w-full min-h-screen flex flex-col items-center p-6 animate-fade-in overflow-y-auto"
+        style={{ background: "#f5f7f2" }}>
+        <div className="w-full max-w-2xl space-y-6 pb-20">
+          {/* タイトル */}
+          <div className="text-center py-4">
+            <p className="text-xs tracking-widest text-green-600 uppercase mb-2 opacity-80">Action List</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 leading-tight" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
+              🎯 行動リストの作成
+            </h1>
           </div>
 
-          <h1 className="text-3xl font-bold text-green-800 mb-2 text-center">行動プランを作成しましょう</h1>
-          <p className="text-lg text-green-600 mb-6 text-center">具体的にあなたの価値観通りの行動を考えておきましょう。</p>
+          {/* 目的の説明カード */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg border-4 border-green-400 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-500 to-green-400" />
+            <h2 className="text-green-600 font-bold text-lg mb-4 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
+              <span>📝</span> これからやること
+            </h2>
+            <div className="space-y-4">
+              <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
+                <span className="text-3xl">🎯</span>
+                <div>
+                  <p className="font-bold text-base text-gray-800 mb-2">価値観に沿った行動をリストアップ</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    あなたが選んだ価値観に基づいて、<span className="text-green-600 font-semibold">具体的な行動プラン</span>を作成します。
+                    レベル1から順番に、簡単なものから始めていきましょう。
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-4 bg-green-50 p-4 rounded-xl">
+                <span className="text-3xl">⏰</span>
+                <div>
+                  <p className="font-bold text-base text-gray-800 mb-2">いつ・どこで・何をするか</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    各レベルの行動について、<span className="text-green-600 font-semibold">「いつ」「どこで」「何をするか」</span>を具体的に書きます。
+                    具体的であるほど、実行しやすくなります。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          {/* 選択された価値観 */}
-          <div className="bg-green-50 rounded-lg p-4 mb-6">
-            <h2 className="text-xl font-bold text-green-800 mb-3">💎 あなたが選んだ価値観</h2>
+          {/* あなたが選んだ価値観カード */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg border-4 border-blue-400 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-500 to-blue-400" />
+            <h2 className="text-blue-600 font-bold text-lg mb-4 flex items-center gap-2" style={{ fontFamily: "'Kosugi Maru', sans-serif" }}>
+              <span>💎</span> あなたが選んだ価値観
+            </h2>
             <div className="space-y-2">
               {selectedAnswers.map((answer, index) => (
-                <div key={index} className="flex items-center gap-3 p-2 bg-white rounded-md">
-                  <span className="bg-green-500 text-white font-bold min-w-[28px] h-7 rounded-full flex items-center justify-center text-sm">
+                <div key={index} className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
+                  <span className="bg-blue-500 text-white font-bold min-w-[28px] h-7 rounded-full flex items-center justify-center text-sm">
                     {index + 1}
                   </span>
-                  <span className="text-green-900 font-medium">{answer}</span>
+                  <span className="text-blue-900 font-medium">{answer}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* 行動プラン入力フォーム */}
-          <div className="bg-blue-50 rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-bold text-blue-800 mb-4">🎯 新しい行動プラン</h2>
-
-            <div className="space-y-4">
-              <div className="relative">
-                <label className="block text-sm font-medium text-blue-700 mb-2">いつ？</label>
-                <div className="flex gap-2">
-                  <div className={`relative transition-all duration-500 flex-1 ${fieldAnimations['field-when'] ? "bg-green-50 rounded-lg p-1" : ""}`}>
-                    {fieldAnimations['field-when'] && (
-                      <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-green-500 text-xl z-10 animate-bounce">
-                        🌿
-                      </span>
-                    )}
-                    <Input
-                      type="text"
-                      placeholder="例：毎朝起きたとき、仕事が終わったら"
-                      value={currentPlan.when}
-                      onChange={(e) => handleInputChange("when", e.target.value)}
-                      className={`w-full ${fieldAnimations["field-when"] ? "border-green-400 shadow-lg" : ""}`}
-                    />
-                  </div>
-                  <Button
-                    onClick={() => {
-                      if (currentPlan.when.trim() && !completedFields.has("when")) {
-                        onFieldComplete() // 100pt
-                        setCompletedFields((prev) => new Set(prev).add("when"))
-                        setShowConfetti(true)
-                        setTimeout(() => setShowConfetti(false), 1000)
-                      }
-                    }}
-                    disabled={!currentPlan.when.trim() || completedFields.has("when")}
-                    className="whitespace-nowrap"
-                  >
-                    {completedFields.has("when") ? "✓" : "回答する"}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="relative">
-                <label className="block text-sm font-medium text-blue-700 mb-2">どんな行動？</label>
-                <div className="flex gap-2">
-                  <div className={`relative transition-all duration-500 flex-1 ${fieldAnimations['field-action'] ? "bg-green-50 rounded-lg p-1" : ""}`}>
-                    {fieldAnimations['field-action'] && (
-                      <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-green-500 text-xl z-10 animate-bounce">
-                        🌿
-                      </span>
-                    )}
-                    <Input
-                      type="text"
-                      placeholder="例：5分間瞑想する、感謝の気持ちを書く"
-                      value={currentPlan.action}
-                      onChange={(e) => handleInputChange("action", e.target.value)}
-                      disabled={!completedFields.has("when")}
-                      className={`w-full ${fieldAnimations["field-action"] ? "border-green-400 shadow-lg" : ""}`}
-                    />
-                  </div>
-                  <Button
-                    onClick={() => {
-                      if (currentPlan.action.trim() && !completedFields.has("action")) {
-                        setTotalPoints((prev) => prev + 200) // 2個目は200pt
-                        setCompletedFields((prev) => new Set(prev).add("action"))
-                        setShowConfetti(true)
-                        setTimeout(() => setShowConfetti(false), 1000)
-                      }
-                    }}
-                    disabled={!currentPlan.action.trim() || completedFields.has("action") || !completedFields.has("when")}
-                    className="whitespace-nowrap"
-                  >
-                    {completedFields.has("action") ? "✓" : "回答する"}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="relative">
-                <label className="block text-sm font-medium text-blue-700 mb-2">その行動をしたくないときに、自分になんと声をかける？</label>
-                {fieldAnimations["plan-motivation"] && (
-                  <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-green-500 text-xl z-10 animate-bounce">
-                    🌿
-                  </span>
-                )}
-                <Input
-                  type="text"
-                  placeholder="例：これをやった方がもっと成長できるよ"
-                  value={currentPlan.motivation}
-                  onChange={(e) => handleInputChange("motivation", e.target.value)}
-                  className={`w-full ${fieldAnimations["plan-motivation"] ? "border-green-400 shadow-lg" : ""}`}
-                />
-              </div>
-            </div>
-
-            <Button
-              onClick={handleAdd}
-              disabled={!hasValidPlan}
-              className={`w-full mt-6 py-4 text-base font-bold ${
-                hasValidPlan
-                  ? "bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white animate-pulse hover:animate-none shadow-2xl border-4 border-green-400 hover:border-green-200"
-                  : "bg-gray-400 text-gray-200 cursor-not-allowed"
-              }`}
+          {/* 開始ボタン */}
+          <div className="text-center py-6">
+            <button
+              onClick={() => {
+                playSound('/sound/nextpage.mp3')
+                setShowIntro(false)
+              }}
+              className="bg-gradient-to-r from-green-500 to-green-600 text-gray-900 font-black px-12 py-4 rounded-full text-base tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
             >
-              <span className="flex items-center justify-center gap-2">
-                <span>追加する</span>
-                <span className="text-sm">+300pt</span>
-              </span>
-            </Button>
+              行動リストを作成する →
+            </button>
           </div>
 
-          {/* 完了ボタン */}
-          <Button
-            onClick={onComplete}
-            className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white py-6 text-2xl font-bold mb-6 shadow-2xl"
-          >
-            行動プラン作成を終了する
-          </Button>
-
-          {/* 作成済みの行動プラン */}
-          {actionPlans.length > 0 && (
-            <div className="bg-green-50 rounded-lg p-6 mb-6">
-              <h2 className="text-xl font-bold text-green-800 mb-4">✅ 作成済みの行動プラン</h2>
-              <div className="space-y-3">
-                {actionPlans.map((plan, index) => (
-                  <div key={index} className="bg-white rounded-lg p-4 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <span className="bg-blue-500 text-white font-bold min-w-[28px] h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0">
-                        {index + 1}
-                      </span>
-                      <div className="flex-1 text-sm">
-                        <p className="text-gray-700">
-                          <span className="font-bold text-blue-700">いつ:</span> {plan.when || "未入力"}
-                        </p>
-                        <p className="text-gray-700">
-                          <span className="font-bold text-blue-700">行動:</span> {plan.action || "未入力"}
-                        </p>
-                        <p className="text-gray-700">
-                          <span className="font-bold text-blue-700">なぜ:</span> {plan.motivation || "未入力"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* 終了ボタン */}
-          <Button
-            onClick={onExit}
-            className="w-full text-green-600 bg-transparent hover:text-green-700 hover:bg-green-50 border-0"
-          >
-            終了
-          </Button>
+          <div className="text-center">
+            <button
+              onClick={() => {
+                playSound('/sound/nextpage.mp3')
+                onExit()
+              }}
+              className="text-gray-500 hover:text-gray-700 underline text-sm"
+            >
+              終了する
+            </button>
+          </div>
         </div>
+      </div>
+    )
+  }
+
+  // 確認画面
+  if (currentStep === 'confirmation') {
+    return (
+      <div className="relative w-full min-h-screen flex flex-col bg-gradient-to-b from-green-50 to-green-100 overflow-y-auto">
+        {/* Confetti Animation */}
+        <ConfettiCanvas isActive={showConfetti} duration={1500} particleCount={50} points={currentPoints} />
+
+        {/* メインコンテンツ */}
+        <div className="flex-1 flex flex-col items-center justify-start p-4">
+          {/* プログレスゲージ */}
+          <div className="w-full max-w-md mb-2">
+            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-green-500 transition-all duration-500" style={{ width: '100%' }} />
+            </div>
+          </div>
+
+          {/* 6つの丸インジケーター */}
+          <div className="flex justify-center gap-2 mb-4">
+            {[1, 2, 3, 4, 5, 6].map((level) => (
+              <div
+                key={level}
+                className={`w-10 h-10 rounded-full transition-all duration-300 flex items-center justify-center ${
+                  level <= completedLevels + 1
+                    ? 'bg-green-500 shadow-lg shadow-green-500/50'
+                    : 'bg-gray-300'
+                }`}
+              >
+                <span className="text-xs font-semibold text-gray-400">Lv{level}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ポイント表示 */}
+          <div className="text-green-600 text-2xl font-extrabold mb-4">🏆 {totalPoints}pt</div>
+
+          {/* 完了メッセージ */}
+          <div className="bg-white rounded-xl p-6 shadow-lg w-full max-w-md mb-4">
+            <h2 className="text-xl font-bold text-green-800 mb-4 text-center">
+              レベル{currentLevel}の行動プランが完成しました！
+            </h2>
+            <div className="bg-green-50 rounded-lg p-4 mb-4">
+              <p className="text-gray-700"><span className="font-bold text-blue-700">いつ：</span>{currentPlan.when}</p>
+              <p className="text-gray-700"><span className="font-bold text-blue-700">どこで：</span>{currentPlan.where}</p>
+              <p className="text-gray-700"><span className="font-bold text-blue-700">何を：</span>{currentPlan.what}</p>
+            </div>
+
+            {/* 猫動画 */}
+            <div className="rounded-lg overflow-hidden mb-4">
+              <video
+                ref={videoRef}
+                src={selectedVideo}
+                className="w-full"
+                muted={isMuted}
+                playsInline
+                onEnded={() => setIsVideoPlaying(false)}
+              />
+            </div>
+
+            {/* ボタン */}
+            <div className="space-y-3">
+              {currentLevel < 6 && (
+                <button
+                  onClick={handleAddLevel}
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-3 rounded-full shadow-lg hover:shadow-xl transition-all"
+                >
+                  次のレベルを作成する（Lv{currentLevel + 1}）
+                </button>
+              )}
+              <button
+                onClick={handleProceedToComplete}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold py-3 rounded-full shadow-lg hover:shadow-xl transition-all"
+              >
+                行動プラン作成を終了する
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // メインの入力画面
+  return (
+    <div className="relative w-full min-h-screen flex flex-col bg-gradient-to-b from-green-50 to-green-100 overflow-y-auto">
+      {/* Confetti Animation */}
+      <ConfettiCanvas isActive={showConfetti} duration={1500} particleCount={50} points={currentPoints} />
+
+      {/* 猫動画オーバーレイ */}
+      <AnimatePresence>
+        {isVideoPlaying && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={() => setIsVideoPlaying(false)}
+          >
+            <div className="bg-white rounded-2xl p-4 shadow-2xl max-w-sm w-full mx-4">
+              <video
+                ref={videoRef}
+                src={selectedVideo}
+                className="w-full rounded-lg"
+                muted={isMuted}
+                playsInline
+                autoPlay
+                onEnded={() => setIsVideoPlaying(false)}
+              />
+              <p className="text-center text-green-600 font-bold mt-2">+{currentPoints}pt 獲得！</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* メインコンテンツ */}
+      <div className="flex-1 flex flex-col items-center justify-start p-4">
+        {/* プログレスゲージ */}
+        <div className="w-full max-w-md mb-2">
+          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-green-500 transition-all duration-500"
+              style={{ width: `${getProgress()}%` }}
+            />
+          </div>
+        </div>
+
+        {/* 6つの丸インジケーター */}
+        <div className="flex justify-center gap-2 mb-4">
+          {[1, 2, 3, 4, 5, 6].map((level) => (
+            <div
+              key={level}
+              className={`w-10 h-10 rounded-full transition-all duration-300 flex items-center justify-center ${
+                level < currentLevel
+                  ? 'bg-green-500 shadow-lg shadow-green-500/50'
+                  : level === currentLevel
+                    ? 'bg-green-400 shadow-md animate-pulse'
+                    : 'bg-gray-300'
+              }`}
+            >
+              <span className={`text-xs font-semibold ${level <= currentLevel ? 'text-white' : 'text-gray-400'}`}>
+                Lv{level}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* ポイント表示 */}
+        <div className="text-green-600 text-2xl font-extrabold mb-4">🏆 {totalPoints}pt</div>
+
+        {/* 質問カード */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg w-full max-w-md mb-4">
+          {/* 吹き出し */}
+          <div className="bg-green-100 rounded-xl p-4 mb-4 relative">
+            <div className="absolute -top-2 left-6 w-4 h-4 bg-green-100 transform rotate-45" />
+            <p className="text-green-800 font-bold text-lg">{getBubbleText()}</p>
+          </div>
+
+          {/* 選択された価値観の表示 */}
+          <div className="bg-blue-50 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-600 font-medium">あなたの価値観：</p>
+            <p className="text-blue-800 font-bold">{selectedAnswers[0]}</p>
+          </div>
+
+          {/* テキスト入力フィールド */}
+          <div className="space-y-4">
+            <Input
+              type="text"
+              value={customInput}
+              onChange={(e) => {
+                setCustomInput(e.target.value)
+                playTyping()
+              }}
+              placeholder={getPlaceholder()}
+              className="w-full p-4 text-lg border-2 border-green-300 rounded-xl focus:border-green-500 focus:ring-green-500"
+            />
+
+            {/* 送信ボタン */}
+            <button
+              onClick={() => {
+                playClick()
+                handleSubmit()
+              }}
+              disabled={!customInput.trim()}
+              className={`w-full py-4 rounded-full font-bold text-lg transition-all ${
+                customInput.trim()
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              回答する（+300pt）
+            </button>
+          </div>
+
+          {/* 進行状況 */}
+          <div className="mt-4 text-center text-sm text-gray-500">
+            {currentStep === 'when' && 'ステップ 1/3'}
+            {currentStep === 'where' && 'ステップ 2/3'}
+            {currentStep === 'what' && 'ステップ 3/3'}
+          </div>
+        </div>
+
+        {/* 終了ボタン */}
+        <button
+          onClick={handleExitToAffiliate}
+          className="text-gray-500 hover:text-gray-700 underline text-sm"
+        >
+          終了する
+        </button>
       </div>
     </div>
   )
@@ -2150,7 +2426,7 @@ const ActionPlanPage = ({
 
 const QuizGame = () => {
   const router = useRouter()
-  const [gameState, setGameState] = useState<"intro" | "prestart" | "quiz" | "summary" | "action" | "result">("intro")
+  const [gameState, setGameState] = useState<"loading" | "intro" | "prestart" | "quiz" | "summary" | "action" | "result">("loading")
   const [currentQuiz, setCurrentQuiz] = useState(0)
   const [userAnswers, setUserAnswers] = useState<string[]>([""])
   const [allUserAnswers, setAllUserAnswers] = useState<string[][]>([])
@@ -2179,7 +2455,7 @@ const QuizGame = () => {
 
   // BGM再生管理
   useEffect(() => {
-    const shouldPlayBgm = gameState !== "intro" && gameState !== "result"
+    const shouldPlayBgm = gameState !== "loading" && gameState !== "intro" && gameState !== "result"
 
     if (shouldPlayBgm && !isMuted) {
       if (!bgmRef.current) {
@@ -2194,7 +2470,23 @@ const QuizGame = () => {
       }
     }
 
+    // タブの可視性変更時にBGMを制御
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (bgmRef.current) {
+          bgmRef.current.pause()
+        }
+      } else {
+        if (shouldPlayBgm && !isMuted && bgmRef.current) {
+          bgmRef.current.play().catch(console.error)
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
       if (bgmRef.current) {
         bgmRef.current.pause()
       }
@@ -2287,10 +2579,10 @@ const QuizGame = () => {
     setGameState("action")
   }
 
-  // 行動プランの追加ハンドラー
-  const handleActionPlanAdd = (when: string, action: string, motivation: string) => {
+  // 行動プランの追加ハンドラー（新形式：when, where, what）
+  const handleActionPlanAdd = (when: string, where: string, what: string) => {
     playSoundEffect("/sound/100pt.mp3")
-    setActionPlans((prev) => [...prev, { when, action, motivation }])
+    setActionPlans((prev) => [...prev, { when, where, what }])
   }
 
   // 行動プランから最終ページへ
@@ -2323,6 +2615,7 @@ const QuizGame = () => {
 
   return (
     <AnimatePresence mode="wait">
+      {gameState === "loading" && <LoadingPage key="loading" onLoadComplete={() => setGameState("intro")} />}
       {gameState === "intro" && <IntroPage key="intro" onStart={handleStart} isMuted={isMuted} setIsMuted={setIsMuted} />}
       {gameState === "prestart" && (
         <PrestartPage
@@ -2373,9 +2666,9 @@ const QuizGame = () => {
           setTotalPoints={setTotalPoints}
           onActionPlanAdd={handleActionPlanAdd}
           onComplete={handleActionComplete}
-          onTimeUp={handleTimeUp}
           onExit={handleDirectToAffiliate}
           onFieldComplete={() => setTotalPoints((prev) => prev + 100)}
+          isMuted={isMuted}
         />
       )}
       {gameState === "result" && (

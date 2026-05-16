@@ -41,8 +41,9 @@ export function FeaturedQuiz() {
   }
   
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-forest-500 to-forest-600 text-white">
-      <div className="absolute inset-0 bg-black/20"></div>
+    <div className="golden-shimmer-border">
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-forest-500 to-forest-600 text-white">
+        <div className="absolute inset-0 bg-black/20"></div>
       <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 p-6 md:p-8">
         <div className="flex flex-col justify-center">
           <Badge variant="outline" className="w-fit mb-4 text-white border-white hover:bg-white/20">
@@ -114,6 +115,7 @@ export function FeaturedQuiz() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

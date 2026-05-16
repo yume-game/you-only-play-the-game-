@@ -100,3 +100,48 @@
   animation: sparkle 1.5s ease-in-out infinite;
 }
 
+/* 金色キラキラグラデーション枠 */
+@keyframes golden-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.golden-shimmer-border {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    #b8860b 0%,
+    #ffd700 15%,
+    #ffec8b 30%,
+    #fff8dc 50%,
+    #ffec8b 70%,
+    #ffd700 85%,
+    #b8860b 100%
+  );
+  background-size: 200% 100%;
+  animation: golden-shimmer 3s linear infinite;
+  padding: 8px;
+  border-radius: 1rem;
+}
+
+.golden-shimmer-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: golden-shimmer 2s linear infinite;
+  border-radius: 1rem;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
