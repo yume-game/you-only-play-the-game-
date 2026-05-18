@@ -407,7 +407,7 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
       {/* 背景画像 - PC版 */}
       <div className="absolute inset-0 hidden md:block">
         <Image
-          src="/image/ladywhoclever.png"
+          src="/image/girlbackgroud.png"
           alt="背景"
           fill
           className="object-cover"
@@ -418,7 +418,7 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
       {/* 背景画像 - スマホ版 */}
       <div className="absolute inset-0 block md:hidden">
         <Image
-          src="/image/ladywhocleverphone.png"
+          src="/image/girlbackgroud.png"
           alt="背景"
           fill
           className="object-cover"
@@ -691,7 +691,7 @@ const IntroPage = ({ onStart, isMuted, setIsMuted, theme }: { onStart: () => voi
       {/* 背景画像 - PC版 */}
       <div className="absolute inset-0 z-0 hidden md:block">
         <Image
-          src="/image/ladywhoclever.png"
+          src="/image/girlbackgroud.png"
           alt="背景"
           fill
           className="object-cover object-top"
@@ -701,7 +701,7 @@ const IntroPage = ({ onStart, isMuted, setIsMuted, theme }: { onStart: () => voi
       {/* 背景画像 - スマホ版 */}
       <div className="absolute inset-0 z-0 block md:hidden">
         <Image
-          src="/image/ladywhocleverphone.png"
+          src="/image/girlbackgroud.png"
           alt="背景"
           fill
           className="object-cover object-top"
@@ -3494,11 +3494,16 @@ const ResultPage = ({
     setAffiliatePatternIndex(randomIndex)
   }, [])
 
+  // javascript:やdata:プロトコルを拒否するURL検証
+  const isSafeUrl = (url: string): boolean => {
+    try { return ["https:", "http:"].includes(new URL(url).protocol) } catch { return false }
+  }
+
   // アフィリエイトリンクがクリックされた時の処理
   const handleAffiliateClick = useCallback(
     (clickData?: { url?: string; clickType?: string }) => {
       if (isSubmitting || hasSubmitted) {
-        if (clickData?.url) {
+        if (clickData?.url && isSafeUrl(clickData.url)) {
           setTimeout(() => {
             window.open(clickData.url, "_blank")
           }, 100)
@@ -3529,7 +3534,7 @@ const ResultPage = ({
       setHasSubmitted(true)
       setIsSubmitting(false)
 
-      if (shouldRedirect && redirectUrl) {
+      if (shouldRedirect && redirectUrl && isSafeUrl(redirectUrl)) {
         setTimeout(() => {
           window.open(redirectUrl, "_blank")
         }, 200)
@@ -3561,7 +3566,7 @@ const ResultPage = ({
       {/* 背景画像 - PC版 */}
       <div className="absolute inset-0 z-0 hidden md:block">
         <Image
-          src="/image/ladywhoclever.png"
+          src="/image/girlbackgroud.png"
           alt="結果画面背景"
           fill
           className="object-cover object-top"
@@ -3571,7 +3576,7 @@ const ResultPage = ({
       {/* 背景画像 - スマホ版 */}
       <div className="absolute inset-0 z-0 block md:hidden">
         <Image
-          src="/image/ladywhocleverphone.png"
+          src="/image/girlbackgroud.png"
           alt="結果画面背景"
           fill
           className="object-cover object-top"

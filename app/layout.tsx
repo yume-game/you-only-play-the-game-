@@ -21,13 +21,13 @@ export const metadata: Metadata = {
   title: "メンタルゲーム",
   description:
     "ドーパミンの知識とメンタルヘルスの知識の融合で、遊んでるだけで気持ちが楽になる。",
-  icons: '/image/ladywhocleverphone.png',
+  icons: '/image/girlbackgroud.png',
   openGraph: {
     title: "メンタルゲーム",
     description: "ドーパミンの知識とメンタルヘルスの知識の融合で、遊んでるだけで気持ちが楽になる。",
     images: [
       {
-        url: '/image/ladywhocleverphone.png',
+        url: '/image/girlbackgroud.png',
         width: 1200,
         height: 630,
         alt: 'メンタルゲーム',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "メンタルゲーム",
     description: "ドーパミンの知識とメンタルヘルスの知識の融合で、遊んでるだけで気持ちが楽になる。",
-    images: ['/image/ladywhocleverphone.png'],
+    images: ['/image/girlbackgroud.png'],
   },
 };
 

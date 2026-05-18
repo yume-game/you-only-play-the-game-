@@ -1301,13 +1301,18 @@ const ResultPage = ({
     setIsSubmitting(false)
   }
 
+  // javascript:やdata:プロトコルを拒否するURL検証
+  const isSafeUrl = (url: string): boolean => {
+    try { return ["https:", "http:"].includes(new URL(url).protocol) } catch { return false }
+  }
+
   // アフィリエイトリンクがクリックされた時の処理
   // handleAffiliateClick関数をuseCallbackでメモ化
   const handleAffiliateClick = useCallback(
     (clickData?: { url?: string; clickType?: string }) => {
       if (isSubmitting || hasSubmitted) {
         // すでに処理中または完了済みの場合でも、遷移は実行
-        if (clickData?.url) {
+        if (clickData?.url && isSafeUrl(clickData.url)) {
           setTimeout(() => {
             window.open(clickData.url, "_blank")
           }, 100)
@@ -1337,7 +1342,7 @@ const ResultPage = ({
         setHasSubmitted(true)
         setIsSubmitting(false)
 
-        if (shouldRedirect && redirectUrl) {
+        if (shouldRedirect && redirectUrl && isSafeUrl(redirectUrl)) {
           setTimeout(() => {
             window.open(redirectUrl, "_blank")
           }, 200)

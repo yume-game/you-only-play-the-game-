@@ -136,7 +136,7 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
       {/* 背景画像 - PC版 */}
       <div className="absolute inset-0 hidden md:block">
         <Image
-          src="/image/ladywhoclever.png"
+          src="/image/girlbackgroud.png"
           alt="背景"
           fill
           className="object-cover"
@@ -147,7 +147,7 @@ const AffiliateComponent = ({ className = "", affiliateTextPattern }: { classNam
       {/* 背景画像 - スマホ版 */}
       <div className="absolute inset-0 block md:hidden">
         <Image
-          src="/image/ladywhocleverphone.png"
+          src="/image/girlbackgroud.png"
           alt="背景"
           fill
           className="object-cover"

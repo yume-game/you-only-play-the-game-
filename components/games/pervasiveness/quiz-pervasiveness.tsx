@@ -300,7 +300,7 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
       <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
       <div className="absolute inset-0 z-0">
         <Image
-          src="/image/background-bright-forest-road.png?height=1080&width=1920"
+          src="/image/girlbackgroud.png"
           alt="心の状態"
           fill
           className="object-cover"
@@ -1174,12 +1174,17 @@ const ResultPage = ({
     setAffiliatePatternIndex(randomIndex)
   }, [])
 
+  // javascript:やdata:プロトコルを拒否するURL検証
+  const isSafeUrl = (url: string): boolean => {
+    try { return ["https:", "http:"].includes(new URL(url).protocol) } catch { return false }
+  }
+
   // アフィリエイトリンクがクリックされた時の処理
   const handleAffiliateClick = useCallback(
     (clickData?: { url?: string; clickType?: string }) => {
       if (isSubmitting || hasSubmitted) {
         // すでに処理中または完了済みの場合でも、遷移は実行
-        if (clickData?.url) {
+        if (clickData?.url && isSafeUrl(clickData.url)) {
           setTimeout(() => {
             window.open(clickData.url, "_blank")
           }, 100)
@@ -1206,7 +1211,7 @@ const ResultPage = ({
         setHasSubmitted(true)
         setIsSubmitting(false)
 
-        if (shouldRedirect && redirectUrl) {
+        if (shouldRedirect && redirectUrl && isSafeUrl(redirectUrl)) {
           setTimeout(() => {
             window.open(redirectUrl, "_blank")
           }, 200)
@@ -1216,7 +1221,7 @@ const ResultPage = ({
     [isSubmitting, hasSubmitted, affiliatePatternIndex],
   )
 
-  
+
   // iframeからのメッセージを受信するリスナー
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {

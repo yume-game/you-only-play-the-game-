@@ -14,6 +14,18 @@ import { homeTranslations, type HomeTranslationKey } from "@/locales/home-transl
 // サンプルデータ
 const quizData = [
   {
+    id: 20,
+    gameId: "noregret", // URL: /games/noregret
+    titleKey: "game_noregret_title",
+    descriptionKey: "game_noregret_description",
+    categoryKey: "game_noregret_category",
+    image: "/image/art22.png",
+    difficultyKey: "difficulty_beginner",
+    durationKey: "duration_3_10",
+    tagKeys: ["game_noregret_tags_1", "game_noregret_tags_2", "game_noregret_tags_3"],
+    featured: false,
+  },
+  {
     id: 18,
     gameId: "valuediscovery", // URL: /games/valuediscovery
     titleKey: "game_valuediscovery_title",
@@ -366,7 +378,7 @@ export default function Home() {
         <div className="absolute inset-0 z-0 overflow-hidden">
           <div className="hidden md:block w-full h-full">
             <Image
-              src="/image/ladywhoclever.png"
+              src="/image/girlbackgroud.png"
               alt=""
               fill
               className="object-cover opacity-30"
@@ -375,7 +387,7 @@ export default function Home() {
           </div>
           <div className="block md:hidden w-full h-full">
             <Image
-              src="/image/ladywhocleverphone.png"
+              src="/image/girlbackgroud.png"
               alt=""
               fill
               className="object-cover opacity-30"

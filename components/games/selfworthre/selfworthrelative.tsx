@@ -611,7 +611,7 @@ const IntroPage = ({ onStart, isMuted, setIsMuted }: { onStart: () => void; isMu
       <TermsOfService isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
       <div className="absolute inset-0 z-0">
         <Image
-          src="/image/background-bright-forest-road.png"
+          src="/image/girlbackgroud.png"
           alt="心の状態"
           fill
           className="object-cover object-top"
@@ -1560,13 +1560,18 @@ const ResultPage = ({
     setIsSubmitting(false)
   }
 
+  // javascript:やdata:プロトコルを拒否するURL検証
+  const isSafeUrl = (url: string): boolean => {
+    try { return ["https:", "http:"].includes(new URL(url).protocol) } catch { return false }
+  }
+
   // アフィリエイトリンクがクリックされた時の処理
   // handleAffiliateClick関数をuseCallbackでメモ化
   const handleAffiliateClick = useCallback(
     (clickData?: { url?: string; clickType?: string }) => {
       if (isSubmitting || hasSubmitted) {
         // すでに処理中または完了済みの場合でも、遷移は実行
-        if (clickData?.url) {
+        if (clickData?.url && isSafeUrl(clickData.url)) {
           setTimeout(() => {
             window.open(clickData.url, "_blank")
           }, 100)
@@ -1596,7 +1601,7 @@ const ResultPage = ({
         setHasSubmitted(true)
         setIsSubmitting(false)
 
-        if (shouldRedirect && redirectUrl) {
+        if (shouldRedirect && redirectUrl && isSafeUrl(redirectUrl)) {
           setTimeout(() => {
             window.open(redirectUrl, "_blank")
           }, 200)
@@ -1632,7 +1637,7 @@ const ResultPage = ({
     <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in">
       <div className="absolute inset-0 z-0">
         <Image
-          src="/image/background-bright-forest-road.png"
+          src="/image/girlbackgroud.png"
           alt="結果画面背景"
           fill
           className="object-cover object-top"
@@ -1855,7 +1860,7 @@ const SummaryPage = ({
     <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in">
       <div className="absolute inset-0 z-0">
         <Image
-          src="/image/background-bright-forest-road.png"
+          src="/image/girlbackgroud.png"
           alt="価値観選択背景"
           fill
           className="object-cover object-top"

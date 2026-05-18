@@ -123,6 +123,14 @@ export const homeTranslations = {
     article_cat_tags_2: "癒し",
     article_cat_tags_3: "ぽっちゃり",
 
+    // No-Regret Game
+    game_noregret_title: "死ぬときに後悔しないゲーム",
+    game_noregret_description: "恐れすぎていたことを言語化し、本当にやりたいことへの小さな行動を決める。そして恐れを30秒間想像することで、後悔しない人生への第一歩を踏み出すゲームです。",
+    game_noregret_category: "後悔",
+    game_noregret_tags_1: "後悔",
+    game_noregret_tags_2: "恐れ",
+    game_noregret_tags_3: "人生",
+
     // Clicker Game
     game_clicker_title: "にこちゃんクリックゲーム",
     game_clicker_description: "落ちてくるにこちゃんをたくさんクリックすることで日常のポジティブに目が行くようになります。",
@@ -286,6 +294,14 @@ export const homeTranslations = {
     article_cat_tags_1: "Cats",
     article_cat_tags_2: "Healing",
     article_cat_tags_3: "Chubby",
+
+    // No-Regret Game
+    game_noregret_title: "No-Regret-When-You-Die Game",
+    game_noregret_description: "Verbalize what you've been too afraid to do, decide on a small action toward what you truly want, and imagine your fear for 30 seconds. Take the first step toward a life without regrets.",
+    game_noregret_category: "Regret",
+    game_noregret_tags_1: "Regret",
+    game_noregret_tags_2: "Fear",
+    game_noregret_tags_3: "Life",
 
     // Clicker Game
     game_clicker_title: "Smiley Click Game",
