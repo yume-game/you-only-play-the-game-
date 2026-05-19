@@ -1786,7 +1786,7 @@ const ResultPage = ({
             improvement_rating: null,
           }),
         })
-        onSetHasSubmittedGameData(true)
+        setHasSubmitted(true)
       } catch {
         console.error("ゲームデータの自動保存に失敗")
       }

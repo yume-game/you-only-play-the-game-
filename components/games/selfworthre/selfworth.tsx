@@ -1521,27 +1521,21 @@ const ResultPage = ({
                 className="mx-auto"
                 affiliateTextPattern={affiliateTextPattern}
                 onAffiliateClick={() => {
-                  console.log("アフィリエイトリンクがクリックされました")
-                  // アフィリエイトクリックをaffiliate_clicksに記録
-                  if (supabase) {
-                    supabase.from("affiliate_clicks").insert({
+                  fetch("/api/affiliate-click", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      game_name: "selfworth",
                       user_id: userId,
                       session_id: sessionId,
-                      game_name: "selfworth",
                       gender: gender || null,
                       age_group: ageGroup || null,
                       enjoyment_rating: enjoymentRating,
                       improvement_rating: improvementRating,
                       affiliate_clicked: true,
                       affiliate_pattern_index: affiliatePatternIndex,
-                    }).then(({ error }) => {
-                      if (error) {
-                        console.error("アフィリエイトクリックの記録に失敗:", error)
-                      } else {
-                        console.log("アフィリエイトクリックが記録されました")
-                      }
-                    })
-                  }
+                    }),
+                  }).catch(() => {})
                 }}
               />
             </div>
